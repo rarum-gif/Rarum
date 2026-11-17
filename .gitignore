@@ -12,3 +12,4 @@ next-env.d.ts
 data/*.json
 !data/.gitkeep
 vice-city-quiz-app.zip
+nnaxos.zip
