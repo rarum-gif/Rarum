@@ -16,6 +16,7 @@ import { PackArt } from "@/components/pack-art";
 import { AnimatedNumber, DifficultyDots, RarityMeter, TierBadge, tierVar, useTierLabel } from "@/components/bits";
 import { RunSummary } from "@/components/run-summary";
 import { SceneOverride } from "@/components/scene";
+import { StageToast, WealthBadge, WealthRail } from "@/components/wealth-hud";
 
 interface RunMeta {
   mode: PlayMode;
@@ -222,6 +223,8 @@ export function PlayClient() {
   }, [phase, lastDone]);
 
   const pack = app.packById(payload?.question.packId ?? meta?.packId);
+  const perQ = Math.max(...app.settings.tiers.map((t) => t.points));
+  const runMax = meta?.total ? meta.total * perQ : Math.max(7, totals.answered + 1) * perQ;
 
   if (phase === "summary" && attempt) {
     return (
@@ -234,17 +237,19 @@ export function PlayClient() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-7rem)] max-w-2xl flex-col">
-      <SceneOverride scene={payload?.question.packId ?? meta?.packId ?? (meta?.mode === "daily" ? "oceandrive" : "night")} />
+      <SceneOverride scene={payload?.question.packId ?? meta?.packId ?? (meta?.mode === "daily" ? "oceandrive" : meta?.mode === "ranked" ? "downtown" : "night")} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="-ml-3"><ArrowLeft />Zurück</Button>
         {meta && (
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <span className="truncate text-xs font-bold uppercase tracking-[0.18em] text-white/80">{meta.title}</span>
-            {!meta.official && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
+            {!meta.official && meta.mode !== "ranked" && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
           </div>
         )}
-        <div className="hud font-num rounded-xl px-3 py-1 text-lg font-semibold text-white"><AnimatedNumber value={totals.total} duration={0.6} /> <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Pkt.</span></div>
+        <WealthBadge points={totals.total} max={runMax} />
       </div>
+      <WealthRail points={totals.total} max={runMax} />
+      <StageToast points={totals.total} max={runMax} />
 
       {meta && meta.total ? <ProgressDots total={meta.total} answered={totals.answered} current={phase === "result" ? totals.answered - 1 : totals.answered} /> : null}
 
@@ -272,7 +277,7 @@ export function PlayClient() {
           {phase === "intro" && meta && (
             <motion.div key="intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="glass overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
               <div className="relative h-44 sm:h-56">
-                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
+                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : meta.mode === "ranked" ? "/images/backgrounds/downtown.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(18,14,34,1)] via-[rgba(18,14,34,0.2)] to-transparent" />
               </div>
               <div className="-mt-10 px-6 pb-8 text-center sm:px-10">
@@ -284,6 +289,7 @@ export function PlayClient() {
                 {meta.practiceReason === "already_played" && <Notice icon={Repeat2}>Du hast diese Challenge heute schon offiziell gespielt. Diese Runde ist ein Training und verändert deine Wertung nicht.</Notice>}
                 {meta.practiceReason === "past_date" && <Notice icon={BookOpen}>Archiv-Runde: zählt als Training, die damalige Wertung bleibt unverändert.</Notice>}
                 {meta.official && <Notice icon={Sparkles}>Offizielle Tageswertung – jede Challenge zählt nur einmal pro Tag.</Notice>}
+                {meta.mode === "ranked" && <Notice icon={Sparkles}>Ranked: Über 220 Punkte bringen Ranglistenpunkte, darunter verlierst du ein paar. Abbrechen hilft nicht – offene Matches zählen nach 30 Minuten.</Notice>}
                 {meta.repeats > 0 && <Notice icon={Info}>Der Fragenbestand ist begrenzt: {meta.repeats} dieser Fragen gab es bereits an einem früheren Tag. Sie sind entsprechend markiert.</Notice>}
                 <Button size="lg" variant="sand" className="mt-7 min-w-56" onClick={begin} autoFocus>
                   {resumed ? "Fortsetzen" : "Los geht's"} <ArrowRight />

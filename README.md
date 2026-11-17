@@ -6,6 +6,13 @@ Rarum ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst 
 
 **Tech-Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui-artige Komponenten (Radix) · Lucide · Motion · Supabase (Auth + PostgreSQL + Realtime) · Vitest · Playwright
 
+## Spielsystem
+
+- **Hauptmenü** im Stil eines Spiels: Menü-Knopf mit Seitenleiste (Spielen · Du · Mehr), grosser Titel, „PLAY NOW“, Ranked-Karte und Modus-Leiste (Archiv · Themen-Packs · Unlimited). Darunter „Die Leiter“.
+- **Vom Strand zur Skyline** (`src/lib/game/wealth.ts`): Jeder Punkt ist 1’000 $ wert. In jeder Runde steigst du elf Stufen hoch – Pleite am Strand → Strassenmusiker → Food Truck → Motel → Cabrio → Nachtclub → Strandvilla → Penthouse → Superyacht → Privatjet → Privatinsel. Der Quiz-Bildschirm zeigt Kontostand, Stufe und eine kletternde Leiste; das Ergebnis zeigt die erreichte Stufe. Das Gesamtvermögen (offizielle Punkte) bestimmt den Karriere-Rang (Pleite … Legende der Küste).
+- **Ranked** (`/ranked`, `src/lib/game/ranked.ts`, Migration `20261118000000_ranked.sql`): 7 Zufallsfragen aus allen Welten. RP-Änderung = (Punkte − 220) / 6, begrenzt auf −25 … +60. Wöchentliche Saison (Mo 00:00 Europe/Zurich, Start bei 1000 RP), Ligen Bronze · Silber · Gold · Platin · Diamant · Champion. Abgebrochene Matches zählen nach 30 Minuten mit ihrem Zwischenstand. Ohne Supabase zeigt die Liga klar gekennzeichnete Demo-Rivalen.
+- **Antwortlisten**: über 8’200 gültige Antworten. Ergänzungen stehen kompakt in `src/content/extras/*.ts` (eine Antwort pro Zeile, `#auto` leitet die Seltenheit aus der Reihenfolge ab). Bei Personenfragen zählt auch der Nachname allein („Roosevelt“).
+
 ---
 
 ## Designsystem
@@ -26,12 +33,13 @@ Rarum ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst 
   | Profil | Marina |
 
   Pack-Seiten und Quiz-Fragen nehmen automatisch die Welt ihres Packs an. Die Bilder bewegen sich mit einem langsamen Kamerazoom und einer leichten Maus-Parallaxe; `prefers-reduced-motion` wird respektiert.
-- **Bilder**: Alle Bildwelten sind selbst erzeugte Szenen (`src/lib/scenes.ts`), gerendert als WebP mit `npm run assets`.
+- **Bilder**: Echte Fotos mit freier Lizenz (CC0 bzw. CC BY) von Wikimedia Commons und StockSnap, gefunden über Openverse. Sie wurden zugeschnitten und mit `scripts/grade-photos.mjs` eingefärbt (Split-Toning: violette Schatten, pinke und orange Lichter, Vignette). Dazu kommen Filmkorn und Farbversatz im Titel per CSS. Alle Nachweise stehen in `public/images/credits.json` und auf `/info#bilder`.
   - `public/images/backgrounds/` – 7 Welten, je Desktop- und Mobil-Format
   - `public/images/themes/` – 15 Pack-Welten, je Vollbild und Karte
+  - `public/images/wealth/` – 11 Stufen der Leiter
   - `public/images/dashboard/`, `quiz/`, `profile/`
 
-  Insgesamt sind es rund 1,5 MB. Eigene, lizenzierte Fotos lassen sich jederzeit einsetzen: gleichnamige Datei ersetzen oder `coverImage` pro Pack setzen.
+  Eigene, lizenzierte Fotos lassen sich jederzeit einsetzen: gleichnamige Datei ersetzen (bei CC-BY-Fotos den Nachweis in `credits.json` ergänzen) oder `coverImage` pro Pack setzen. Die früheren SVG-Illustrationen lassen sich mit `npm run assets:illustrations` erzeugen – Achtung, das überschreibt die Fotos.
 
 ## Schnellstart (Demo-Modus, ohne Datenbank)
 

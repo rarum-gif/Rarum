@@ -116,7 +116,38 @@ function candidatesFor(answers: Answer[]): Candidate[] {
   return out;
 }
 
-export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers">, rawInput: string): MatchOutcome | WrongOutcome | NoMatch {
+const TIER_ORDER = ["known", "familiar", "unusual", "rare", "very_rare", "legendary"];
+const PERSON_PROMPT = /(person|präsident|kaiser|komponist|maler|architekt|erfinder|autor|schauspieler|sportler|entdecker|künstler|pharao|könig|monarch|ermittler|regie|weltmeister|gottheit)/i;
+const NAME_FILLERS = new Set(["der", "die", "das", "von", "van", "de", "del", "da", "di", "du", "le", "la", "jr", "junior", "senior", "sohn", "grosse", "gross", "altere", "jungere", "heilige"]);
+
+/** Kennzeichnende Namensteile einer Personen-Antwort (Nachname, ggf. Vorname bei Herrschern). */
+function nameTokens(form: string): string[] {
+  const parts = form.split(" ").filter((p) => p && !/^\d+$/.test(p) && !NAME_FILLERS.has(p));
+  return parts.length >= 2 ? [parts[parts.length - 1]] : [];
+}
+
+/**
+ * Nachnamen-Erkennung für Personenfragen: "Roosevelt" zählt als Franklin D. Roosevelt.
+ * Teilen sich mehrere Antworten den Nachnamen, wird die bekannteste gewertet –
+ * die Antwort ist in jedem Fall richtig.
+ */
+function matchSurname(cands: Candidate[], inputCompact: string, fuzzy: boolean): Candidate | null {
+  if (inputCompact.length < 3) return null;
+  const tol = fuzzy ? allowedTypos(inputCompact.length) : 0;
+  if (fuzzy && tol === 0) return null;
+  let best: { cand: Candidate; dist: number } | null = null;
+  for (const c of cands) {
+    for (const t of nameTokens(c.form)) {
+      if (fuzzy && t[0] !== inputCompact[0]) continue;
+      const dist = fuzzy ? editDistance(t, inputCompact) : t === inputCompact ? 0 : 99;
+      if (dist > tol) continue;
+      if (!best || dist < best.dist || (dist === best.dist && TIER_ORDER.indexOf(c.answer.tier) < TIER_ORDER.indexOf(best.cand.answer.tier))) best = { cand: c, dist };
+    }
+  }
+  return best?.cand ?? null;
+}
+
+export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers"> & { prompt?: string }, rawInput: string): MatchOutcome | WrongOutcome | NoMatch {
   const input = normalize(rawInput);
   if (!input) return { kind: "none" };
   const inputCompact = compact(input);
@@ -132,6 +163,12 @@ export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers">
   for (const w of question.wrongAnswers ?? []) {
     const forms = [w.text, ...(w.aliases ?? [])].map((f) => compact(normalize(f)));
     if (forms.includes(inputCompact)) return { kind: "wrong", wrong: w };
+  }
+
+  const isPerson = !!question.prompt && PERSON_PROMPT.test(question.prompt) && !input.includes(" ");
+  if (isPerson) {
+    const s = matchSurname(cands, inputCompact, false);
+    if (s) return { kind: "answer", answer: s.answer, matchKind: "alias" };
   }
 
   // 3: vorsichtige Tippfehlerkorrektur
@@ -153,7 +190,10 @@ export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers">
       ambiguous = true;
     }
   }
-  if (!best || ambiguous) return { kind: "none" };
+  if (!best || ambiguous) {
+    const s = isPerson ? matchSurname(cands, inputCompact, true) : null;
+    return s ? { kind: "answer", answer: s.answer, matchKind: "fuzzy" } : { kind: "none" };
+  }
 
   // Kein Fuzzy-Treffer, wenn die Eingabe genauso nah an einer bekannten Falschantwort liegt.
   for (const w of question.wrongAnswers ?? []) {

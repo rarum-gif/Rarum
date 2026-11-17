@@ -1,3 +1,4 @@
+import { CAREER } from "./wealth";
 import type { AttemptRecord, GameSettings, LevelDef, ThemePack, TierId } from "@/lib/types";
 import { addDays, daysBetween } from "@/lib/time";
 
@@ -161,14 +162,7 @@ export function earnedAchievements(stats: UserStats, attempts: AttemptRecord[]):
 }
 
 export function defaultLevels(): LevelDef[] {
-  return [
-    { level: 1, name: "Anfänger", minPoints: 0 },
-    { level: 2, name: "Entdecker", minPoints: 500 },
-    { level: 3, name: "Wissenssammler", minPoints: 1500 },
-    { level: 4, name: "Experte", minPoints: 4000 },
-    { level: 5, name: "Meister", minPoints: 9000 },
-    { level: 6, name: "Legende", minPoints: 18000 },
-  ];
+  return CAREER.map((l) => ({ ...l }));
 }
 
 export function settingsMaxTotal(settings: GameSettings, count: number) {

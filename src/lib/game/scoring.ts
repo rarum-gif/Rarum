@@ -51,7 +51,7 @@ export function evaluateAnswer(settings: GameSettings, q: Question, input: strin
     return { ...base, status: "empty", answerId: null, answerText: null, tier: null, points: 0, explanation: null, examples: examplesFor(q, null) };
   }
   const answers = opts.verifiedOnly === false ? q.answers : q.answers.filter((a) => a.status === "verified");
-  const m = matchAnswer({ answers, wrongAnswers: q.wrongAnswers }, input);
+  const m = matchAnswer({ answers, wrongAnswers: q.wrongAnswers, prompt: q.prompt }, input);
   if (m.kind === "answer") {
     return {
       ...base,

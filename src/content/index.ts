@@ -1,6 +1,7 @@
 import type { ContentData, Question } from "@/lib/types";
 import { seedPacks, seedSettings } from "./packs";
 import { defineQuestions, wsearch } from "./dsl";
+import { applyExtras } from "./extras";
 import allgemeinwissen from "./questions/allgemeinwissen";
 import sport from "./questions/sport";
 import musik from "./questions/musik";
@@ -40,11 +41,14 @@ const drafts: Question[] = defineQuestions("geografie", [
   },
 ]);
 
+/** Bei inhaltlichen Seed-Änderungen erhöhen – bestehende Demo-Stores übernehmen sie dann automatisch. */
+export const CONTENT_REVISION = 2;
+
 export function seedContent(): ContentData {
-  const questions = [
+  const questions = applyExtras([
     ...allgemeinwissen, ...sport, ...musik, ...geografie, ...geschichte, ...wissenschaft, ...tierePflanzen,
     ...filmeSerien, ...gaming, ...essenTrinken, ...literatur, ...technik, ...kunstKultur, ...markenWirtschaft, ...reisen,
     ...drafts,
-  ];
+  ]);
   return structuredClone({ settings: seedSettings, packs: seedPacks, questions });
 }

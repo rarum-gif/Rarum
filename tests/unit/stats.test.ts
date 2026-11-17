@@ -29,8 +29,8 @@ describe("Statistik und Level", () => {
     expect(s.todayPoints).toBe(450);
   });
   it("berechnet Level aus konfigurierbaren Schwellen", () => {
-    expect(levelFor(defaultLevels(), 0).current.name).toBe("Anfänger");
-    expect(levelFor(defaultLevels(), 1600).current.name).toBe("Wissenssammler");
+    expect(levelFor(defaultLevels(), 0).current.name).toBe("Pleite");
+    expect(levelFor(defaultLevels(), 1600).current.name).toBe("Kleinunternehmer");
     expect(levelFor(defaultLevels(), 99999).next).toBeNull();
   });
   it("vergibt Abzeichen", () => {

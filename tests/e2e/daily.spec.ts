@@ -4,7 +4,7 @@ import { answerCurrent, answerKey } from "./helpers";
 test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", async ({ page, request }) => {
   const key = await answerKey(request);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Deine heutige Wissens-Challenge wartet/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rarum" })).toBeVisible();
   await page.getByRole("link", { name: /Play now/i }).click();
 
   await expect(page.getByText("Offizielle Tageswertung")).toBeVisible();
@@ -29,14 +29,15 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
     await page.getByRole("button", { name: i === 6 ? "Ergebnis anzeigen" : "Weiter" }).click();
   }
 
-  await expect(page.getByText("von 700 möglichen Punkten")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("von 700 Punkten")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Du hast es geschafft bis zur")).toBeVisible();
   await expect(page.getByText("Deine Antworten")).toBeVisible();
   await expect(page.locator("ol > li")).toHaveCount(7);
 
   // Startseite zeigt Ergebnis, Serie und Punkte
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Mission erfüllt." })).toBeVisible();
-  await expect(page.getByTitle("Aktuelle Serie")).toContainText("1");
+  await expect(page.getByRole("link", { name: /Heute: \$/ })).toBeVisible();
+  await expect(page.getByText("1 Tag", { exact: true })).toBeVisible();
 
   // Wiederholung ist nur Training
   await page.goto("/play?mode=daily");
@@ -86,4 +87,21 @@ test("Themen-Pack, Archiv und Admin-Zugriff", async ({ page }) => {
 test("Rangliste im Demo-Modus täuscht keine fremden Spieler vor", async ({ page }) => {
   await page.goto("/rangliste");
   await expect(page.getByText("Demo-Modus ohne Server-Datenbank.")).toBeVisible();
+});
+
+test("Ranked: Match spielen und RP erhalten", async ({ page, request }) => {
+  const key = await answerKey(request);
+  await page.goto("/ranked");
+  await expect(page.getByText("Wochen-Rangliste")).toBeVisible();
+  await page.getByRole("link", { name: /Match starten/ }).click();
+  await page.getByRole("button", { name: /Los geht's/ }).click();
+  for (let i = 0; i < 7; i++) {
+    await expect(page.locator("form h2")).toBeVisible({ timeout: 10_000 });
+    await answerCurrent(page, key, "rare");
+    await expect(page.getByText("Antwort erkannt!")).toBeVisible();
+    await page.getByRole("button", { name: i === 6 ? "Ergebnis anzeigen" : "Weiter" }).click();
+  }
+  await expect(page.getByText(/RP · jetzt \d+/)).toBeVisible({ timeout: 10_000 });
+  await page.goto("/ranked");
+  await expect(page.getByText("1 Matches", { exact: false }).first()).toBeVisible();
 });

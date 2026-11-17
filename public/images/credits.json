@@ -1,0 +1,411 @@
+[
+ {
+  "file": "sunset_c",
+  "title": "Hawaii at Sunset with Palm Trees (5495739231)",
+  "creator": "Nan Palmero from San Antonio, TX, USA",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=60543911",
+  "usedFor": [
+   "backgrounds/sunset",
+   "dashboard/hero"
+  ]
+ },
+ {
+  "file": "oceandrive",
+  "title": "Ocean Drive - Art Deco buildings in Miami (5410502514)",
+  "creator": "Jorge Láscar from Australia",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=31949777",
+  "usedFor": [
+   "backgrounds/oceandrive",
+   "dashboard/daily"
+  ]
+ },
+ {
+  "file": "downtown_a",
+  "title": "Omni at night",
+  "creator": "miamibrickell",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=147348732",
+  "usedFor": [
+   "backgrounds/downtown"
+  ]
+ },
+ {
+  "file": "night",
+  "title": "City Skyline",
+  "creator": "Matt Bango",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/city-skyline-YZPGLUEBRO",
+  "usedFor": [
+   "backgrounds/night",
+   "quiz/default"
+  ]
+ },
+ {
+  "file": "sunset_b",
+  "title": "File:2007 Miami sunset 3.jpg",
+  "creator": "Averette",
+  "license": "by",
+  "licenseVersion": "3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=5545306",
+  "usedFor": [
+   "backgrounds/coast"
+  ]
+ },
+ {
+  "file": "dusk_a",
+  "title": "Harbor Dusk",
+  "creator": "Pixzen",
+  "license": "by",
+  "licenseVersion": "3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=73648920",
+  "usedFor": [
+   "backgrounds/dusk"
+  ]
+ },
+ {
+  "file": "sunset_a",
+  "title": "Miami Beach at Sunset",
+  "creator": "rboed*",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=128760948",
+  "usedFor": [
+   "backgrounds/marina",
+   "profile/header",
+   "wealth/villa"
+  ]
+ },
+ {
+  "file": "allg_a",
+  "title": "City Skyline",
+  "creator": "Tricia Gray",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/city-skyline-B8XBJWJO9F",
+  "usedFor": [
+   "themes/allgemeinwissen"
+  ]
+ },
+ {
+  "file": "sport",
+  "title": "Stadium of Light, Sunderland afc",
+  "creator": "Mrs Logic",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=18444034",
+  "usedFor": [
+   "themes/sport"
+  ]
+ },
+ {
+  "file": "musik",
+  "title": "Concert Show",
+  "creator": "Nainoa Shizuru",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/concert-show-5FGWJW4Z5D",
+  "usedFor": [
+   "themes/musik"
+  ]
+ },
+ {
+  "file": "geo_a",
+  "title": "Aerial view of the southwest coastline of Mauritius with an underwater waterfall (53696882152)",
+  "creator": "'dronepicr'",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=148043315",
+  "usedFor": [
+   "themes/geografie"
+  ]
+ },
+ {
+  "file": "gesch",
+  "title": "20140411 57 Greece Attica Cape Sounion Temple Of Poseidon (13824907504)",
+  "creator": "Sjaak Kempe from Groningen, The Netherlands",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=75570129",
+  "usedFor": [
+   "themes/geschichte"
+  ]
+ },
+ {
+  "file": "tech",
+  "title": "ESO data center (eso-data-centre-9101)",
+  "creator": "ESO",
+  "license": "by",
+  "licenseVersion": "4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=170886365",
+  "usedFor": [
+   "themes/wissenschaft"
+  ]
+ },
+ {
+  "file": "tiere_b",
+  "title": "Flamingo's in Bigi Pan (31095596322)",
+  "creator": "-JvL- from Netherlands",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=69679740",
+  "usedFor": [
+   "themes/tiere-pflanzen"
+  ]
+ },
+ {
+  "file": "filme_a",
+  "title": "Marquee, Co-Ed Cinema, Brevard, NC (32794821428)",
+  "creator": "Warren LeMay from Cincinnati, OH, United States",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=77941902",
+  "usedFor": [
+   "themes/filme-serien"
+  ]
+ },
+ {
+  "file": "gaming_a",
+  "title": "Takadanobaba Game Center Mikado ground floor 2019-02-24",
+  "creator": "Asanagi",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=81323322",
+  "usedFor": [
+   "themes/gaming"
+  ]
+ },
+ {
+  "file": "essen",
+  "title": "Kolibri cocktail bar (48701698697)",
+  "creator": "Bex Walton from London, England",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=82256927",
+  "usedFor": [
+   "themes/essen-trinken"
+  ]
+ },
+ {
+  "file": "lit_b",
+  "title": "Stacked Books",
+  "creator": "Matt Bango",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/stacked-books-DGF2LFZ6JJ",
+  "usedFor": [
+   "themes/literatur"
+  ]
+ },
+ {
+  "file": "penthouse",
+  "title": "New-York-City-skyline-dusk-September-2014",
+  "creator": "Acediscovery",
+  "license": "by",
+  "licenseVersion": "4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=143606493",
+  "usedFor": [
+   "themes/technik",
+   "wealth/penthouse"
+  ]
+ },
+ {
+  "file": "kunst_b",
+  "title": "Grafitti City",
+  "creator": "Bernard Spragg",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/grafitti-city-GQOEQ7JEPA",
+  "usedFor": [
+   "themes/kunst-kultur"
+  ]
+ },
+ {
+  "file": "marken_a",
+  "title": "1963 Chevrolet Corvette Gran Sport (37277854082)",
+  "creator": "Greg Gjerdingen from Willmar, USA",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=69265574",
+  "usedFor": [
+   "themes/marken-wirtschaft"
+  ]
+ },
+ {
+  "file": "reisen_b",
+  "title": "Airplane Travel",
+  "creator": "Paul-Vincent Roll",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "stocksnap",
+  "url": "https://stocksnap.io/photo/airplane-travel-I8XMT4U7ZR",
+  "usedFor": [
+   "themes/reisen"
+  ]
+ },
+ {
+  "file": "broke_a",
+  "title": "Lifeguard S Booth",
+  "creator": "Nikolay Loubet",
+  "license": "by",
+  "licenseVersion": "3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=71793137",
+  "usedFor": [
+   "wealth/broke"
+  ]
+ },
+ {
+  "file": "busker",
+  "title": "Pattaya Beach, Thai street musicians, Street music, Thailand",
+  "creator": "Vyacheslav Argenberg",
+  "license": "by",
+  "licenseVersion": "4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=117622709",
+  "usedFor": [
+   "wealth/busker"
+  ]
+ },
+ {
+  "file": "truck_a",
+  "title": "Neapolitan Express food truck, 2013-09-16",
+  "creator": "altiemae",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=29045800",
+  "usedFor": [
+   "wealth/truck"
+  ]
+ },
+ {
+  "file": "motel",
+  "title": "Roy's Motel & Cafe at dusk",
+  "creator": "Blervis",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=185669142",
+  "usedFor": [
+   "wealth/motel"
+  ]
+ },
+ {
+  "file": "cabrio_a",
+  "title": "Classic convertible car parked on a roadside with a person opening the door at sunset in a countryside setting",
+  "creator": "Shixart1985",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=195963584",
+  "usedFor": [
+   "wealth/cabrio"
+  ]
+ },
+ {
+  "file": "club_a",
+  "title": "Doowop neon Jolly Roger",
+  "creator": "Smallbones",
+  "license": "cc0",
+  "licenseVersion": "1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=26370514",
+  "usedFor": [
+   "wealth/club"
+  ]
+ },
+ {
+  "file": "yacht",
+  "title": "Superyacht 'Ocean Emerald' at sunset. Nai Harn beach, Phuket, Thailand (38873203461)",
+  "creator": "Phuket@photographer.net from Phuket, Thailand",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=65967157",
+  "usedFor": [
+   "wealth/yacht"
+  ]
+ },
+ {
+  "file": "jet",
+  "title": "PRIVATE JET N881CW CESSNA 525 CITATION CJ4 (49355991668)",
+  "creator": "Adznee Abas from Kuala Lumpur",
+  "license": "by",
+  "licenseVersion": "2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=109959105",
+  "usedFor": [
+   "wealth/jet"
+  ]
+ },
+ {
+  "file": "palm2",
+  "title": "Koh Mak, Thailand, Sunset on the beach with palms",
+  "creator": "Vyacheslav Argenberg",
+  "license": "by",
+  "licenseVersion": "4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "source": "wikimedia",
+  "url": "https://commons.wikimedia.org/w/index.php?curid=110878404",
+  "usedFor": [
+   "wealth/island"
+  ]
+ }
+]

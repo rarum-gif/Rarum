@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateAnswer, GRACE_MS } from "@/lib/game/scoring";
 import { seedContent } from "@/content";
 
+
 const content = seedContent();
 const q = content.questions.find((x) => x.id === "geografie-hauptstadt-europa")!;
 const s = content.settings;
@@ -25,5 +26,57 @@ describe("evaluateAnswer", () => {
   });
   it("akzeptiert Auto-Submit knapp nach Ablauf innerhalb der Kulanz", () => {
     expect(evaluateAnswer(s, q, "Paris", { elapsedMs: 25_500 }).status).toBe("accepted");
+  });
+});
+
+import { rankedDelta, rankedFromAttempts, divisionFor } from "@/lib/game/ranked";
+import { stageFor, formatCash, STAGES } from "@/lib/game/wealth";
+import { matchAnswer } from "@/lib/game/matching";
+
+
+describe("Ranked & Vermögen", () => {
+  it("berechnet RP-Deltas mit Grenzen", () => {
+    expect(rankedDelta(220)).toBe(0);
+    expect(rankedDelta(700)).toBe(60);
+    expect(rankedDelta(0)).toBe(-25);
+    expect(divisionFor(1000).division.id).toBe("bronze");
+    expect(divisionFor(1160).division.id).toBe("gold");
+  });
+  it("summiert nur Ranked-Runden der laufenden Saison", () => {
+    const base = { official: false, setId: null, date: null, packId: null, maxTotal: 700, answers: [], finishedAt: "" };
+    const r = rankedFromAttempts([
+      { ...base, id: "a", mode: "ranked", total: 520, startedAt: "2026-11-16T10:00:00Z" },
+      { ...base, id: "b", mode: "ranked", total: 700, startedAt: "2026-11-01T10:00:00Z" },
+      { ...base, id: "c", mode: "unlimited", total: 900, startedAt: "2026-11-16T11:00:00Z" },
+    ], "2026-11-15T23:00:00Z");
+    expect(r).toMatchObject({ rp: 1050, matches: 1, best: 520 });
+  });
+  it("führt durch die Vermögensleiter", () => {
+    expect(stageFor(0, 700).stage.id).toBe("broke");
+    expect(stageFor(700, 700).stage.id).toBe("island");
+    expect(stageFor(350, 700).index).toBeGreaterThan(3);
+    expect(STAGES.every((s, i) => i === 0 || s.at > STAGES[i - 1].at)).toBe(true);
+    expect(formatCash(1_250_000)).toBe("$1.25M");
+    expect(formatCash(42_000)).toBe("$42K");
+  });
+  it("erkennt Nachnamen und erweiterte Antworten", () => {
+    const qs = seedContent().questions;
+    const q = (id: string) => qs.find((x) => x.id === id)!;
+    const ok = (id: string, input: string) => matchAnswer(q(id), input).kind === "answer";
+    expect(ok("geschichte-us-praesident", "Roosevelt")).toBe(true);
+    expect(ok("allgemeinwissen-chemisches-element", "Natrium")).toBe(true);
+    expect(ok("allgemeinwissen-chemisches-element", "Oganesson")).toBe(true);
+    expect(ok("essen-trinken-gewuerz", "Oregano")).toBe(true);
+    expect(ok("allgemeinwissen-chemisches-element", "Wasser")).toBe(false);
+  });
+});
+
+describe("Saison", () => {
+  it("berechnet die ISO-Kalenderwoche", async () => {
+    const { season } = await import("@/lib/game/ranked");
+    expect(season("2026-11-17").week).toBe(47);
+    expect(season("2026-01-01").week).toBe(1);
+    expect(season("2027-01-01").week).toBe(53);
+    expect(season("2026-11-17").startKey).toBe("2026-11-16");
   });
 });

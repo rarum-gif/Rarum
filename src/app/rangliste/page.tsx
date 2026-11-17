@@ -213,6 +213,10 @@ export default function LeaderboardPage() {
     <div>
       <PageHeader eyebrow="Rangliste" title="Spielerischer Wettbewerb">
         Tages-, Wochen- und Gesamtwertung. Angezeigt werden nur Benutzername, Avatar und Punkte – keine persönlichen Daten.
+        <Link href="/ranked" className="btn-sunset mt-5 flex max-w-md items-center justify-between rounded-2xl px-5 py-4 transition-transform hover:-translate-y-0.5">
+          <span><span className="font-display block text-3xl leading-none tracking-wide">Ranked-Liga</span><span className="text-xs text-white/85">Wochensaison mit Ligen von Bronze bis Champion</span></span>
+          <Crown className="size-7" />
+        </Link>
       </PageHeader>
       {!accountsEnabled ? (
         <LocalBoard />

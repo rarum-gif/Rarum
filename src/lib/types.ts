@@ -122,7 +122,7 @@ export interface AnswerReport {
 
 // ---------- Spielablauf ----------
 
-export type PlayMode = "daily" | "pack" | "training" | "unlimited" | "archive";
+export type PlayMode = "daily" | "pack" | "training" | "unlimited" | "archive" | "ranked";
 
 export type ResultStatus = "accepted" | "known_wrong" | "unknown" | "empty" | "timeout";
 

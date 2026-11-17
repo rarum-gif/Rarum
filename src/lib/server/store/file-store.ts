@@ -2,11 +2,12 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { AnswerReport, ContentData, DailySet, GameSettings, Question, ThemePack } from "@/lib/types";
-import { seedContent } from "@/content";
+import { CONTENT_REVISION, seedContent } from "@/content";
 import type { ContentStore } from "./types";
 
 interface StoreData extends ContentData {
   version: 1;
+  contentRevision?: number;
   sets: DailySet[];
   reports: AnswerReport[];
 }
@@ -33,9 +34,13 @@ export class FileStore implements ContentStore {
           const raw = await fs.readFile(this.file, "utf8");
           const parsed = JSON.parse(raw) as StoreData;
           this.data = parsed;
+          if ((parsed.contentRevision ?? 1) < CONTENT_REVISION) {
+            syncSeed(parsed);
+            await this.flush();
+          }
         } catch {
           const seed = seedContent();
-          this.data = { version: 1, ...seed, sets: [], reports: [] };
+          this.data = { version: 1, contentRevision: CONTENT_REVISION, ...seed, sets: [], reports: [] };
           await this.flush();
         }
         return this.data!;
@@ -152,4 +157,27 @@ export class FileStore implements ContentStore {
     if (r) Object.assign(r, patch);
     await this.flush();
   }
+}
+
+/**
+ * Übernimmt neue Seed-Antworten in einen bestehenden Store, ohne Admin-Änderungen
+ * zu überschreiben: Unveränderte Seed-Fragen werden ersetzt, bearbeitete Fragen
+ * erhalten nur die zusätzlichen Antworten.
+ */
+function syncSeed(data: StoreData) {
+  const seed = seedContent();
+  for (const sq of seed.questions) {
+    const i = data.questions.findIndex((q) => q.id === sq.id);
+    if (i < 0) continue;
+    const q = data.questions[i];
+    if (q.updatedAt === sq.updatedAt) {
+      data.questions[i] = sq;
+      continue;
+    }
+    const known = new Set(q.answers.map((a) => a.id));
+    for (const a of sq.answers) if (!known.has(a.id)) q.answers.push(a);
+  }
+  // alte Standard-Level durch die Karriere-Ränge ersetzen (eigene Level bleiben)
+  if (data.settings.levels.length && data.settings.levels[0].name === "Anfänger") data.settings.levels = seed.settings.levels;
+  data.contentRevision = CONTENT_REVISION;
 }

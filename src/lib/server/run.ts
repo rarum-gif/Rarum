@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import type { AnswerResult, AttemptAnswer, AttemptRecord, ContentData, PlayMode, PublicQuestion, ResultStatus, TierId } from "@/lib/types";
 import { isEligible, setId as makeSetId } from "@/lib/game/schedule";
 import { evaluateAnswer, maxPointsPerQuestion } from "@/lib/game/scoring";
+import { RANKED_QUESTIONS } from "@/lib/game/ranked";
 import { isValidDateKey, formatDateDe } from "@/lib/time";
 import { getStore } from "./store";
 import { ensureSets, toPublicQuestion, todayKey } from "./daily";
@@ -169,6 +170,16 @@ export async function startRun(input: StartInput, user: SessionUser | null, now 
   } else if (mode === "unlimited") {
     packId = null;
     qs = [];
+  } else if (mode === "ranked") {
+    packId = null;
+    const pool = content.questions.filter((q) => isEligible(q));
+    if (pool.length < RANKED_QUESTIONS) throw new RunError("Für Ranked gibt es noch zu wenige geprüfte Fragen.", 404);
+    // je Themenwelt höchstens eine Frage, damit jede Ranked-Runde breit gemischt ist
+    const byPack = new Map<string, typeof pool>();
+    for (const q of pickRandom(pool, pool.length)) byPack.set(q.packId, [...(byPack.get(q.packId) ?? []), q]);
+    const firsts = pickRandom([...byPack.values()].map((l) => l[0]), RANKED_QUESTIONS);
+    qs = firsts.map((q) => q.id);
+    rep = qs.map(() => false);
   } else {
     throw new RunError("Unbekannter Spielmodus.");
   }
@@ -244,6 +255,10 @@ function buildMeta(content: ContentData, s: RunState, practiceReason?: RunMeta["
     case "archive":
       title = s.packId ? `${pack} · Archiv` : "Daily Challenge · Archiv";
       subtitle = s.date ? formatDateDe(s.date) : "";
+      break;
+    case "ranked":
+      title = "Ranked Match";
+      subtitle = "7 Fragen aus allen Welten · zählt für die Wochen-Rangliste";
       break;
   }
   return {

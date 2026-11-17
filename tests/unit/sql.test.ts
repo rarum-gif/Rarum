@@ -63,6 +63,16 @@ describe("Supabase-Migration (PostgreSQL via PGlite)", () => {
     const fr = await db.query("select * from public.leaderboard('all', '2026-11-17', 'friends')");
     expect(fr.rows).toHaveLength(1);
     await db.exec("reset role;");
+
+    // Ranked: RP = 1000 + Summe der Deltas; laufende Runden zählen erst nach 30 Minuten
+    await db.exec(`insert into public.challenge_attempts (user_id, mode, total, started_at, finished_at) values
+      ('${u1}','ranked',520, now(), now()), ('${u1}','ranked',100, now(), now()),
+      ('${u2}','ranked',700, now(), now()), ('${u2}','ranked',0, now(), null),
+      ('${u2}','ranked',0, now() - interval '2 hours', null)`);
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${u1}', false);`);
+    const rk = await db.query<{ username: string; rp: number; matches: number }>("select * from public.ranked_leaderboard(now() - interval '7 days')");
+    expect(rk.rows.map((r) => [r.username, Number(r.rp), Number(r.matches)])).toEqual([["spieler_22222222", 1000 + 60 - 25, 2], ["anna", 1000 + 50 - 20, 2]]);
+    await db.exec("reset role;");
     await db.close();
   }, 60_000);
 });
