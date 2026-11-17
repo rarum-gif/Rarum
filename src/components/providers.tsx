@@ -1,0 +1,143 @@
+"use client";
+import * as React from "react";
+import type { AttemptRecord, GameSettings, ThemePack } from "@/lib/types";
+import { computeStats, levelFor, type UserStats } from "@/lib/game/stats";
+import { api } from "@/lib/client/api";
+import { loadLocalAttempts, saveLocalAttempt } from "@/lib/client/local";
+
+export interface SetSummary {
+  id: string;
+  date: string;
+  kind: "daily" | "pack";
+  packId: string | null;
+  count: number;
+  repeats: number;
+  difficulty: number;
+  createdBy: "auto" | "admin";
+}
+
+export interface Overview {
+  today: string;
+  serverNow: string;
+  nextReset: string;
+  timezone: string;
+  daily: SetSummary | null;
+  packs: { packId: string; set: SetSummary | null; eligible: number }[];
+}
+
+export interface SessionInfo {
+  username: string;
+  avatar: string;
+  role: "player" | "admin";
+  inviteCode: string;
+  email: string | null;
+}
+
+interface AppState {
+  packs: ThemePack[];
+  settings: GameSettings;
+  accountsEnabled: boolean;
+  user: SessionInfo | null;
+  sessionLoaded: boolean;
+  attempts: AttemptRecord[];
+  attemptsLoaded: boolean;
+  storage: "local" | "account";
+  overview: Overview | null;
+  today: string;
+  serverOffset: number;
+  stats: UserStats;
+  level: ReturnType<typeof levelFor>;
+  refreshOverview: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+  reloadAttempts: () => Promise<void>;
+  recordAttempt: (a: AttemptRecord, storage: "local" | "account") => void;
+  packById: (id: string | null | undefined) => ThemePack | undefined;
+  hasOfficial: (setId: string | null | undefined) => AttemptRecord | undefined;
+}
+
+const Ctx = React.createContext<AppState | null>(null);
+
+export function useApp() {
+  const v = React.useContext(Ctx);
+  if (!v) throw new Error("useApp ausserhalb des Providers");
+  return v;
+}
+
+export function AppProvider({ children, packs, settings, accountsEnabled, initialOverview }: { children: React.ReactNode; packs: ThemePack[]; settings: GameSettings; accountsEnabled: boolean; initialOverview: Overview | null }) {
+  const [user, setUser] = React.useState<SessionInfo | null>(null);
+  const [sessionLoaded, setSessionLoaded] = React.useState(!accountsEnabled);
+  const [attempts, setAttempts] = React.useState<AttemptRecord[]>([]);
+  const [attemptsLoaded, setAttemptsLoaded] = React.useState(false);
+  const [overview, setOverview] = React.useState<Overview | null>(initialOverview);
+  const [serverOffset, setServerOffset] = React.useState(0);
+
+  const refreshOverview = React.useCallback(async () => {
+    try {
+      const t0 = Date.now();
+      const o = await api<Overview>("/api/overview");
+      const t1 = Date.now();
+      setServerOffset(new Date(o.serverNow).getTime() - (t0 + t1) / 2);
+      setOverview(o);
+    } catch {
+      /* Übersicht bleibt beim letzten Stand */
+    }
+  }, []);
+
+  const refreshSession = React.useCallback(async () => {
+    if (!accountsEnabled) return;
+    try {
+      const me = await api<{ user: SessionInfo | null }>("/api/me");
+      setUser(me.user);
+    } finally {
+      setSessionLoaded(true);
+    }
+  }, [accountsEnabled]);
+
+  const reloadAttempts = React.useCallback(async () => {
+    if (user) {
+      try {
+        const r = await api<{ attempts: AttemptRecord[] }>("/api/me/attempts");
+        setAttempts(r.attempts);
+      } catch {
+        setAttempts([]);
+      }
+    } else {
+      setAttempts(loadLocalAttempts());
+    }
+    setAttemptsLoaded(true);
+  }, [user]);
+
+  React.useEffect(() => {
+    void refreshSession();
+    void refreshOverview();
+  }, [refreshSession, refreshOverview]);
+
+  React.useEffect(() => {
+    if (sessionLoaded) void reloadAttempts();
+  }, [sessionLoaded, reloadAttempts]);
+
+  // Tageswechsel: Übersicht neu laden, sobald Mitternacht erreicht ist
+  React.useEffect(() => {
+    if (!overview) return;
+    const ms = new Date(overview.nextReset).getTime() - (Date.now() + serverOffset) + 1500;
+    const t = setTimeout(() => void refreshOverview(), Math.max(1000, Math.min(ms, 2 ** 31 - 1)));
+    return () => clearTimeout(t);
+  }, [overview, serverOffset, refreshOverview]);
+
+  const recordAttempt = React.useCallback((a: AttemptRecord, storage: "local" | "account") => {
+    if (storage === "local") setAttempts(saveLocalAttempt(a));
+    else setAttempts((prev) => [a, ...prev.filter((x) => x.id !== a.id)]);
+  }, []);
+
+  const today = overview?.today ?? new Date().toISOString().slice(0, 10);
+  const stats = React.useMemo(() => computeStats(attempts, packs, today), [attempts, packs, today]);
+  const level = React.useMemo(() => levelFor(settings.levels, stats.totalPoints), [settings.levels, stats.totalPoints]);
+  const packById = React.useCallback((id: string | null | undefined) => packs.find((p) => p.id === id), [packs]);
+  const hasOfficial = React.useCallback((setId: string | null | undefined) => (setId ? attempts.find((a) => a.official && a.setId === setId) : undefined), [attempts]);
+
+  const value: AppState = {
+    packs, settings, accountsEnabled, user, sessionLoaded, attempts, attemptsLoaded, storage: user ? "account" : "local",
+    overview, today, serverOffset, stats, level, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial,
+  };
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}

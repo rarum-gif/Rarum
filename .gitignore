@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env
+.env.local
+data/store.json
+data/*.tmp
+test-results
+playwright-report
+*.tsbuildinfo
+next-env.d.ts
+data/*.json
+!data/.gitkeep
