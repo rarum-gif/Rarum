@@ -81,7 +81,7 @@ export default function ArchivePage() {
       <div className="space-y-8">
         {Object.entries(byDate).map(([d, sets]) => (
           <section key={d}>
-            <h2 className="mb-3 font-display text-lg font-medium">{d === today ? "Heute" : formatDateDe(d, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h2>
+            <h2 className="font-display mb-3 text-3xl text-white">{d === today ? "Heute" : formatDateDe(d, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h2>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {sets.map((s) => {
                 const p = s.packId ? packById(s.packId) : null;
@@ -89,18 +89,22 @@ export default function ArchivePage() {
                 const isToday = s.date === today;
                 const href = isToday && !played?.official ? (s.kind === "daily" ? "/play?mode=daily" : `/play?mode=pack&pack=${s.packId}`) : `/play?mode=archive&date=${s.date}${s.packId ? `&pack=${s.packId}` : ""}`;
                 return (
-                  <Link key={s.id} href={href} className="group flex items-center gap-3 rounded-2xl border border-line bg-surface p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]">
-                    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-white")} style={{ background: p?.accent ?? "var(--forest-700)" }}>
-                      {played ? <Check className="size-5" /> : <Play className="size-4" />}
+                  <Link key={s.id} href={href} className="glass group flex items-center gap-3 rounded-2xl p-2.5 pr-4 transition-all hover:-translate-y-0.5 hover:border-white/25">
+                    <span className="relative size-16 shrink-0 overflow-hidden rounded-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={s.packId ? `/images/themes/${s.packId}-card.webp` : "/images/backgrounds/oceandrive-mobile.webp"} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      <span className={cn("absolute inset-0 flex items-center justify-center text-white", played ? "bg-black/45" : "bg-black/20")}>
+                        {played ? <Check className="size-5" /> : <Play className="size-4 fill-current" />}
+                      </span>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{p ? p.name : "Daily Challenge"}</p>
+                      <p className="truncate text-sm font-bold text-white">{p ? p.name : "Daily Challenge"}</p>
                       <p className="flex items-center gap-2 text-xs text-fg-subtle">
                         {s.count} Fragen · <DifficultyDots value={s.difficulty} />
                         {s.repeats > 0 && <span className="inline-flex items-center gap-0.5"><Repeat2 className="size-3" />{s.repeats}</span>}
                       </p>
                     </div>
-                    {played?.official !== undefined ? <span className="font-display text-base font-medium">{played.official}</span> : played ? <span className="text-xs text-fg-subtle">{played.training}× Training</span> : null}
+                    {played?.official !== undefined ? <span className="font-num text-lg font-semibold text-white">{played.official}</span> : played ? <span className="text-xs text-fg-subtle">{played.training}× Training</span> : null}
                   </Link>
                 );
               })}

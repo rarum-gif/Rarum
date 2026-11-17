@@ -71,19 +71,20 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden rounded-[28px] bg-forest-800 p-8 text-center text-cream shadow-[var(--shadow-lift)] sm:p-10">
-        <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-sand-300/15 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-16 size-72 rounded-full bg-olive-400/20 blur-3xl" />
-        <p className="relative text-xs font-semibold uppercase tracking-[0.16em] text-sand-300">
+      <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="relative isolate overflow-hidden rounded-[28px] border border-white/12 p-8 text-center text-white shadow-[var(--shadow-lift)] sm:p-12">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={attempt.packId ? `/images/themes/${attempt.packId}.webp` : attempt.mode === "unlimited" ? "/images/backgrounds/night.webp" : "/images/dashboard/daily.webp"} alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[rgba(12,8,20,0.55)] via-[rgba(12,8,20,0.7)] to-[rgba(12,8,20,0.92)]" />
+        <p className="relative text-xs font-bold uppercase tracking-[0.28em] text-[var(--peach)]">
           {title(attempt, pack?.name)} {attempt.date ? "· " + formatDateDe(attempt.date, { day: "numeric", month: "long" }) : ""}
         </p>
-        {!attempt.official && <p className="relative mt-2 inline-block rounded-full bg-white/10 px-3 py-1 text-xs text-sand-200">Trainingsrunde – zählt nicht für die offizielle Wertung</p>}
-        <div className="relative mt-5 font-display text-7xl font-medium tracking-tight sm:text-8xl">
-          <AnimatedNumber value={attempt.total} duration={1.4} />
+        {!attempt.official && <p className="relative mt-3 inline-block rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80">Trainingsrunde – zählt nicht für die offizielle Wertung</p>}
+        <div className="relative mt-4 text-8xl font-bold tracking-tight sm:text-[140px]">
+          <AnimatedNumber value={attempt.total} duration={1.4} className="text-sunset drop-shadow-[0_8px_40px_rgba(255,106,85,0.45)]" />
         </div>
-        <p className="relative mt-1 text-sand-200">von {fmt(attempt.maxTotal)} möglichen Punkten</p>
+        <p className="relative mt-1 text-white/75">von {fmt(attempt.maxTotal)} möglichen Punkten</p>
         {isBest && (
-          <motion.p initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.2, type: "spring" }} className="relative mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--tier-legendary)] px-4 py-1.5 text-sm font-semibold text-forest-950">
+          <motion.p initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.2, type: "spring" }} className="bg-sunset relative mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-white glow-sunset">
             <Crown className="size-4" /> Neue persönliche Bestleistung!
           </motion.p>
         )}
@@ -95,23 +96,23 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
       </motion.section>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-surface p-4">
-          <p className="text-xs font-medium text-fg-subtle">Beste Antwort</p>
+        <div className="hud rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">Beste Antwort</p>
           {best ? (
             <>
-              <p className="mt-1 truncate font-display text-lg font-medium">{best.answerText}</p>
+              <p className="mt-1 truncate text-lg font-extrabold text-white">{best.answerText}</p>
               <TierBadge tier={best.tier!} className="mt-1" />
             </>
           ) : <p className="mt-1 text-fg-muted">–</p>}
         </div>
-        <div className="rounded-2xl border border-line bg-surface p-4">
-          <p className="text-xs font-medium text-fg-subtle">Ø Seltenheit</p>
-          <p className="mt-1 font-display text-lg font-medium">{avgTier ? tierLabel(avgTier) : "–"}</p>
+        <div className="hud rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">Ø Seltenheit</p>
+          <p className="font-display mt-1 text-2xl text-white">{avgTier ? tierLabel(avgTier) : "–"}</p>
           <p className="text-xs text-fg-muted">{accepted.length} von {attempt.answers.length} Antworten gültig</p>
         </div>
-        <div className="rounded-2xl border border-line bg-surface p-4">
-          <p className="text-xs font-medium text-fg-subtle">Persönliche Bestleistung</p>
-          <p className="mt-1 font-display text-lg font-medium">{fmt(Math.max(prevBest, attempt.total))}</p>
+        <div className="hud rounded-2xl p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">Persönliche Bestleistung</p>
+          <p className="font-num mt-1 text-2xl font-semibold text-white">{fmt(Math.max(prevBest, attempt.total))}</p>
           <p className="text-xs text-fg-muted">
             {sameKind.length === 0 ? "Erste Runde dieser Art" : isBest ? `+${attempt.total - prevBest} gegenüber vorher` : `Noch ${fmt(prevBest - attempt.total + 1)} bis zur neuen Bestleistung`}
           </p>
@@ -137,16 +138,16 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
         <CardContent>
           <ol className="space-y-2">
             {attempt.answers.map((a, i) => (
-              <motion.li key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.06 }} className="flex items-center gap-3 rounded-xl border border-line bg-bg-elevated px-4 py-3">
+              <motion.li key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.06 }} className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.04] px-4 py-3">
                 <span className="w-5 text-sm tabular-nums text-fg-subtle">{i + 1}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-fg-muted">{a.prompt}</p>
-                  <p className="truncate font-medium">
+                  <p className="truncate font-semibold text-white">
                     {a.status === "accepted" ? a.answerText : a.input ? <span className="text-fg-muted line-through decoration-1">{a.input}</span> : <span className="text-fg-subtle">keine Antwort</span>}
                   </p>
                 </div>
                 {a.tier ? <TierBadge tier={a.tier} className="hidden sm:inline-flex" /> : <span className="hidden text-xs text-fg-subtle sm:inline">{a.status === "unknown" ? "nicht in der Liste" : a.status === "timeout" ? "Zeit abgelaufen" : a.status === "known_wrong" ? "falsch" : ""}</span>}
-                <span className={cn("w-10 text-right font-display text-lg font-medium tabular-nums", !a.points && "text-fg-subtle")} style={a.tier ? { color: tierVar(a.tier) } : undefined}>{a.points}</span>
+                <span className={cn("font-num w-10 text-right text-lg font-semibold", !a.points && "text-fg-subtle", a.tier === "legendary" && "text-sunset")} style={a.tier && a.tier !== "legendary" ? { color: tierVar(a.tier) } : undefined}>{a.points}</span>
               </motion.li>
             ))}
           </ol>
@@ -161,7 +162,7 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
               {history.map((h) => (
                 <div key={h.id} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
                   <span className="text-xs tabular-nums text-fg-muted">{h.total}</span>
-                  <motion.div initial={{ height: 0 }} animate={{ height: `${(h.total / histMax) * 100}%` }} transition={{ duration: 0.8, delay: 0.2 }} className={cn("w-full max-w-12 rounded-t-lg", h.id === attempt.id ? "bg-accent" : "bg-surface-3")} />
+                  <motion.div initial={{ height: 0 }} animate={{ height: `${(h.total / histMax) * 100}%` }} transition={{ duration: 0.8, delay: 0.2 }} className={cn("w-full max-w-12 rounded-t-lg", h.id === attempt.id ? "bg-sunset shadow-[0_0_20px_rgba(255,106,85,0.6)]" : "bg-white/15")} />
                   <span className="text-[11px] text-fg-subtle">{h.date ? formatDateDe(h.date, { day: "numeric", month: "numeric" }) : new Date(h.finishedAt).toLocaleDateString("de-CH", { day: "numeric", month: "numeric" })}</span>
                 </div>
               ))}

@@ -49,7 +49,7 @@ function SyncCard() {
     <Card>
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <CloudUpload className="mt-0.5 size-5 text-accent" />
+          <CloudUpload className="mt-0.5 size-5 text-[var(--peach)]" />
           <div>
             <p className="font-medium">{state === "done" ? "Synchronisiert" : `${local} lokale Ergebnisse gefunden`}</p>
             <p className="text-sm text-fg-muted">{msg || "Übernimm deine bisherigen Gast-Ergebnisse in dein Konto. Bereits gewertete Tage werden nicht doppelt gezählt."}</p>
@@ -138,16 +138,20 @@ function ProfileInner() {
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-6 rounded-[28px] border border-line bg-surface p-6 shadow-[var(--shadow-soft)] sm:flex-row sm:items-center sm:p-8">
-        <AvatarBubble id={user?.avatar} size={88} />
+      <section className="relative isolate overflow-hidden rounded-[28px] border border-white/12 shadow-[var(--shadow-lift)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/profile/header.webp" alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(12,8,20,0.97)] via-[rgba(12,8,20,0.55)] to-[rgba(12,8,20,0.15)]" />
+        <div className="flex flex-col gap-6 p-6 pt-32 sm:flex-row sm:items-end sm:p-10 sm:pt-44">
+        <div className="rounded-full p-1 bg-sunset glow-sunset"><AvatarBubble id={user?.avatar} size={96} className="ring-0" /></div>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-3xl font-medium tracking-tight">{user?.username ?? "Gast"}</h1>
-            <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">Level {level.current.level} · {level.current.name}</span>
+            <h1 className="font-display text-6xl text-white sm:text-7xl">{user?.username ?? "Gast"}</h1>
+            <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Level {level.current.level} · {level.current.name}</span>
           </div>
           <div className="mt-3 max-w-md">
             <Progress value={level.progress} />
-            <p className="mt-1.5 text-xs text-fg-subtle">{level.next ? `${fmt(stats.totalPoints)} Punkte · noch ${fmt(level.toNext)} bis „${level.next.name}“` : `${fmt(stats.totalPoints)} Punkte · höchstes Level erreicht`}</p>
+            <p className="mt-1.5 text-xs text-white/70">{level.next ? `${fmt(stats.totalPoints)} Punkte · noch ${fmt(level.toNext)} bis „${level.next.name}“` : `${fmt(stats.totalPoints)} Punkte · höchstes Level erreicht`}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -159,6 +163,7 @@ function ProfileInner() {
           ) : accountsEnabled ? (
             <Button asChild><Link href="/login">Kostenloses Konto erstellen</Link></Button>
           ) : null}
+        </div>
         </div>
       </section>
 
@@ -182,9 +187,9 @@ function ProfileInner() {
           {ACHIEVEMENTS.map((a) => {
             const has = earned.includes(a.id);
             return (
-              <div key={a.id} className={cn("flex flex-col items-center rounded-2xl border border-line p-4 text-center", has ? "bg-bg-elevated" : "bg-transparent")}>
+              <div key={a.id} className={cn("group flex flex-col items-center rounded-2xl border p-4 text-center transition-all hover:-translate-y-0.5", has ? "border-[rgba(242,193,78,0.35)] bg-[linear-gradient(180deg,rgba(242,193,78,0.10),rgba(255,255,255,0.02))]" : "border-white/8 bg-white/[0.03]")}>
                 <AchievementMedal achievement={a} earned={has} />
-                <p className={cn("mt-3 text-sm font-medium", !has && "text-fg-muted")}>{a.title}</p>
+                <p className={cn("mt-3 text-sm font-bold", has ? "text-white" : "text-fg-muted")}>{a.title}</p>
                 <p className="mt-0.5 text-xs text-fg-subtle">{a.description}</p>
               </div>
             );
@@ -197,9 +202,9 @@ function ProfileInner() {
           <CardHeader><CardTitle>Persönliche Rekorde</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {records.map((r) => (
-              <div key={r.label} className="flex items-center justify-between rounded-xl bg-bg-elevated px-4 py-3">
+              <div key={r.label} className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.04] px-4 py-3">
                 <div><p className="text-sm text-fg-muted">{r.label}</p>{r.hint && <p className="text-xs text-fg-subtle">{r.hint}</p>}</div>
-                <span className="font-display text-lg font-medium">{r.value}</span>
+                <span className="font-num text-lg font-semibold text-white">{r.value}</span>
               </div>
             ))}
           </CardContent>
@@ -217,7 +222,7 @@ function ProfileInner() {
                     const ps = stats.perPack[p.id];
                     return (
                       <tr key={p.id}>
-                        <td className="py-2.5"><Link href={`/packs/${p.id}`} className="flex items-center gap-2 hover:text-accent"><span className="size-2 rounded-full" style={{ background: p.accent }} />{p.name}</Link></td>
+                        <td className="py-2"><Link href={`/packs/${p.id}`} className="flex items-center gap-2.5 font-semibold text-white hover:text-[var(--peach)]"><img src={`/images/themes/${p.id}-card.webp`} alt="" className="size-8 rounded-md object-cover" />{p.name}</Link></td>
                         <td className="py-2.5 text-right tabular-nums">{ps?.challenges ?? 0}</td>
                         <td className="py-2.5 text-right tabular-nums">{fmt(ps?.points ?? 0)}</td>
                         <td className="py-2.5 text-right tabular-nums">{ps?.average ?? 0}</td>
@@ -245,7 +250,7 @@ function ProfileInner() {
                       <span className="w-24 shrink-0 text-xs text-fg-subtle">{a.date ? formatDateDe(a.date, { day: "numeric", month: "short", year: "2-digit" }) : new Date(a.finishedAt).toLocaleDateString("de-CH")}</span>
                       <span className="flex-1 truncate">{a.mode === "daily" ? "Daily Challenge" : a.mode === "unlimited" ? "Unlimited" : packById(a.packId)?.name ?? "Archiv"}{!a.official && <span className="ml-2 text-xs text-fg-subtle">Training</span>}</span>
                       {best?.tier && <TierBadge tier={best.tier} className="hidden sm:inline-flex" />}
-                      <span className="w-12 text-right font-display text-base font-medium">{a.total}</span>
+                      <span className="font-num w-12 text-right text-base font-semibold text-white">{a.total}</span>
                     </Link>
                   </li>
                 );

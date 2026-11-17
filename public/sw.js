@@ -1,6 +1,6 @@
 // Minimaler Service Worker: App-Shell & statische Dateien offline verfügbar.
 // API-Aufrufe (Spielstand, Wertung) gehen immer ans Netz.
-const CACHE = "rarum-v1";
+const CACHE = "rarum-v2";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icon.svg", "/manifest.webmanifest"])).then(() => self.skipWaiting()));
 });

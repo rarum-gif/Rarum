@@ -32,9 +32,31 @@ interface Friend {
 }
 
 function RankIcon({ rank }: { rank: number }) {
-  if (rank === 1) return <Crown className="size-5 text-[var(--tier-legendary)]" />;
-  if (rank <= 3) return <Medal className={cn("size-5", rank === 2 ? "text-stone-500" : "text-[var(--tier-very_rare)]")} />;
-  return <span className="w-5 text-center text-sm tabular-nums text-fg-subtle">{rank}</span>;
+  if (rank === 1) return <Crown className="size-5 text-[var(--gold)]" />;
+  if (rank <= 3) return <Medal className={cn("size-5", rank === 2 ? "text-[#d6d3e0]" : "text-[#e8a06a]")} />;
+  return <span className="font-num w-5 text-center text-sm text-fg-subtle">{rank}</span>;
+}
+
+/** Top-3 als Podest mit Gold-/Sunset-Akzenten */
+function Podium({ rows }: { rows: Row[] }) {
+  const order = [rows[1], rows[0], rows[2]].filter(Boolean);
+  return (
+    <div className="mb-6 grid grid-cols-3 items-end gap-2 sm:gap-4">
+      {order.map((r) => {
+        const rank = Number(r.rank);
+        const h = rank === 1 ? "h-44 sm:h-52" : rank === 2 ? "h-36 sm:h-44" : "h-32 sm:h-40";
+        return (
+          <div key={r.username} className={cn("relative flex flex-col items-center justify-end overflow-hidden rounded-2xl border p-3 text-center", h, rank === 1 ? "border-[rgba(242,193,78,0.6)] bg-[linear-gradient(180deg,rgba(242,193,78,0.25),rgba(255,93,115,0.12))] shadow-[0_0_40px_-10px_rgba(242,193,78,0.7)]" : "hud")}>
+            {rank === 1 && <Crown className="absolute top-3 size-6 text-[var(--gold)] drop-shadow-[0_0_10px_rgba(242,193,78,0.8)]" />}
+            <AvatarBubble id={r.avatar} size={rank === 1 ? 56 : 44} />
+            <p className="mt-2 w-full truncate text-sm font-bold text-white">{r.username}</p>
+            <p className={cn("font-num text-xl font-bold", rank === 1 ? "text-sunset" : "text-white")}>{fmt(Number(r.points))}</p>
+            <p className="font-display text-2xl text-white/50">#{rank}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function LocalBoard() {
@@ -42,7 +64,7 @@ function LocalBoard() {
   const best = attempts.filter((a) => a.official && a.mode === "daily").sort((a, b) => b.total - a.total).slice(0, 10);
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 rounded-2xl border border-dashed border-line-strong bg-surface-2/60 p-4 text-sm text-fg-muted">
+      <div className="glass flex items-start gap-3 rounded-2xl p-4 text-sm text-fg-muted">
         <HardDrive className="mt-0.5 size-4 shrink-0" />
         <p><span className="font-medium text-fg">Demo-Modus ohne Server-Datenbank.</span> Globale Ranglisten und Freunde benötigen Supabase. Unten siehst du nur deine eigenen, lokal gespeicherten Bestleistungen – es werden keine anderen Spieler vorgetäuscht.</p>
       </div>
@@ -55,7 +77,7 @@ function LocalBoard() {
                 <li key={a.id} className="flex items-center gap-4 py-3">
                   <RankIcon rank={i + 1} />
                   <Link href={`/ergebnis/${a.id}`} className="flex-1 hover:text-accent">{a.date ? formatDateDe(a.date) : ""}</Link>
-                  <span className="font-display text-lg font-medium tabular-nums">{a.total}</span>
+                  <span className="font-num text-lg font-semibold text-white">{a.total}</span>
                 </li>
               ))}
             </ol>
@@ -105,7 +127,7 @@ function FriendsPanel() {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Users className="size-5 text-accent" />Freunde</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="flex items-center gap-2"><Users className="size-5 text-[var(--peach)]" />Freunde</CardTitle></CardHeader>
       <CardContent className="space-y-5">
         <form onSubmit={add} className="flex gap-2">
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Benutzername oder Einladungscode" aria-label="Freund finden" />
@@ -113,7 +135,7 @@ function FriendsPanel() {
         </form>
         {msg && <p className={cn("text-sm", msg.ok ? "text-success" : "text-danger")}>{msg.text}</p>}
         {data && (
-          <button onClick={() => navigator.clipboard?.writeText(data.inviteCode)} className="flex w-full items-center justify-between rounded-xl bg-surface-2 px-4 py-3 text-sm">
+          <button onClick={() => navigator.clipboard?.writeText(data.inviteCode)} className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm">
             <span className="text-fg-muted">Dein Einladungscode</span>
             <span className="flex items-center gap-2 font-mono font-semibold tracking-wider">{data.inviteCode}<Copy className="size-4 text-fg-subtle" /></span>
           </button>
@@ -217,17 +239,20 @@ export default function LeaderboardPage() {
               {!rows ? <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-12 rounded-xl" />)}</div> : rows.length === 0 ? (
                 <p className="py-10 text-center text-sm text-fg-muted">Für diesen Zeitraum gibt es noch keine Ergebnisse.</p>
               ) : (
-                <ol className="space-y-1">
-                  {rows.map((r) => (
-                    <li key={r.username} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5", r.is_me && "bg-accent-soft")}>
+                <>
+                {rows.length >= 3 && <Podium rows={rows.slice(0, 3)} />}
+                <ol className="space-y-1.5">
+                  {rows.slice(rows.length >= 3 ? 3 : 0).map((r) => (
+                    <li key={r.username} className={cn("flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5", r.is_me && "border-[rgba(255,122,69,0.5)] bg-[rgba(255,122,69,0.14)]")}>
                       <RankIcon rank={Number(r.rank)} />
                       <AvatarBubble id={r.avatar} size={34} />
                       <span className="flex-1 truncate font-medium">{r.username}{r.is_me && <span className="ml-2 text-xs text-accent">Du</span>}</span>
                       <span className="hidden text-xs text-fg-subtle sm:inline">{r.challenges} Challenges</span>
-                      <span className="w-16 text-right font-display text-lg font-medium tabular-nums">{fmt(Number(r.points))}</span>
+                      <span className="font-num w-16 text-right text-lg font-semibold text-white">{fmt(Number(r.points))}</span>
                     </li>
                   ))}
                 </ol>
+                </>
               )}
               <p className="mt-4 text-xs text-fg-subtle">Heute: Punkte der offiziellen Daily Challenge · Woche/Gesamt: alle offiziellen Tageswertungen inkl. Themen-Packs.</p>
             </CardContent>

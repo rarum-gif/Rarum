@@ -7,14 +7,14 @@ export const Tabs = T.Root;
 export const TabsContent = T.Content;
 
 export function TabsList({ className, ...props }: React.ComponentProps<typeof T.List>) {
-  return <T.List className={cn("inline-flex rounded-full border border-line bg-surface-2 p-1", className)} {...props} />;
+  return <T.List className={cn("glass inline-flex rounded-2xl p-1", className)} {...props} />;
 }
 
 export function TabsTrigger({ className, ...props }: React.ComponentProps<typeof T.Trigger>) {
   return (
     <T.Trigger
       className={cn(
-        "rounded-full px-4 py-1.5 text-sm font-medium text-fg-muted transition-all data-[state=active]:bg-surface data-[state=active]:text-fg data-[state=active]:shadow-[var(--shadow-soft)]",
+        "rounded-xl px-4 py-1.5 text-sm font-semibold text-fg-muted transition-all hover:text-white data-[state=active]:bg-sunset data-[state=active]:text-white data-[state=active]:shadow-[0_6px_18px_-6px_rgba(255,106,85,0.9)]",
         className,
       )}
       {...props}

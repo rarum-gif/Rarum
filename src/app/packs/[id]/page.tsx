@@ -8,6 +8,7 @@ import { PackArt } from "@/components/pack-art";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DifficultyDots, ResetCountdown, StatTile } from "@/components/bits";
+import { SceneOverride } from "@/components/scene";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { formatDateDe } from "@/lib/time";
 import { fmt } from "@/lib/utils";
@@ -26,27 +27,29 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="space-y-8">
+      <SceneOverride scene={pack.id} />
       <Button asChild variant="ghost" size="sm" className="-ml-3"><Link href="/packs"><ArrowLeft />Alle Packs</Link></Button>
 
-      <section className="overflow-hidden rounded-[28px] border border-line bg-surface shadow-[var(--shadow-lift)]">
-        <div className="relative h-56 sm:h-72">
-          <PackArt packId={pack.id} image={pack.coverImage} alt={pack.name} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-6 text-white sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/80">Themen-Pack</p>
-            <h1 className="mt-1 font-display text-4xl font-medium tracking-tight sm:text-5xl">{pack.name}</h1>
-            <p className="mt-2 max-w-xl text-white/85">{pack.tagline}</p>
+      <section className="glass overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
+        <div className="relative h-72 sm:h-[26rem]">
+          <PackArt packId={pack.id} image={pack.coverImage} alt={pack.name} variant="full" className="kenburns" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(18,14,34,1)] via-[rgba(18,14,34,0.25)] to-transparent" />
+          <div className="absolute bottom-0 left-0 p-6 text-white sm:p-10">
+            <p className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: pack.accentSoft }}>Themen-Pack · {pack.short}</p>
+            <h1 className="font-display mt-2 text-6xl drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)] sm:text-8xl">{pack.name}</h1>
+            <p className="mt-2 max-w-xl text-lg text-white/85">{pack.tagline}</p>
           </div>
         </div>
         <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[1.3fr_1fr]">
           <div>
             <p className="text-fg-muted">{pack.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {pack.topics.map((t) => <span key={t} className="rounded-full border border-line px-3 py-1 text-xs text-fg-muted">{t}</span>)}
+              {pack.topics.map((t) => <span key={t} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">{t}</span>)}
             </div>
           </div>
-          <div className="rounded-3xl p-5" style={{ background: pack.accentSoft, color: pack.ink }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-70">Die heutige {pack.short}-Challenge</p>
+          <div className="hud relative overflow-hidden rounded-3xl p-5 text-white">
+            <span className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${pack.accent}, #ff7a45, #ff4f8b)` }} />
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--peach)]">Die heutige {pack.short}-Challenge</p>
             {set ? (
               <>
                 <ul className="mt-3 space-y-1.5 text-sm">
@@ -57,32 +60,32 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
                 <div className="mt-4 flex flex-wrap gap-2">
                   {played ? (
                     <>
-                      <Button asChild size="sm" style={{ background: pack.ink, color: pack.accentSoft }}><Link href={`/ergebnis/${played.id}`}><Check />{played.total} Punkte – ansehen</Link></Button>
+                      <Button asChild size="sm"><Link href={`/ergebnis/${played.id}`}><Check />{played.total} Punkte – ansehen</Link></Button>
                       <Button asChild size="sm" variant="secondary"><Link href={`/play?mode=pack&pack=${pack.id}&practice=1`}><Repeat2 />Wiederholen</Link></Button>
                     </>
                   ) : (
-                    <Button asChild style={{ background: pack.ink, color: pack.accentSoft }}><Link href={`/play?mode=pack&pack=${pack.id}`}>Challenge starten <ArrowRight /></Link></Button>
+                    <Button asChild variant="sand" size="lg"><Link href={`/play?mode=pack&pack=${pack.id}`}>Challenge starten <ArrowRight /></Link></Button>
                   )}
                 </div>
               </>
             ) : (
               <p className="mt-3 text-sm">Für heute sind in diesem Pack noch keine geprüften Fragen verfügbar.</p>
             )}
-            <ResetCountdown className="mt-4 text-xs opacity-75" />
+            <ResetCountdown className="mt-4 text-xs text-white/70" />
           </div>
         </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-accent" />Training</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-[var(--peach)]" />Training</CardTitle></CardHeader>
           <CardContent>
             <p className="text-sm text-fg-muted">Zufällige Fragen aus dem gesamten {pack.short}-Bestand. Beliebig oft spielbar, zählt nicht für die Tageswertung.</p>
             <Button asChild variant="secondary" className="mt-4"><Link href={`/play?mode=training&pack=${pack.id}`}>Training starten</Link></Button>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="size-5 text-accent" />Deine {pack.short}-Statistik</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="size-5 text-[var(--peach)]" />Deine {pack.short}-Statistik</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
             <StatTile label="Challenges" value={ps?.challenges ?? 0} />
             <StatTile label="Punkte gesammelt" value={fmt(ps?.points ?? 0)} />
@@ -99,9 +102,9 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
             <ul className="divide-y divide-line">
               {history.map((a) => (
                 <li key={a.id}>
-                  <Link href={`/ergebnis/${a.id}`} className="flex items-center justify-between py-3 text-sm hover:text-accent">
+                  <Link href={`/ergebnis/${a.id}`} className="flex items-center justify-between py-3 text-sm hover:text-[var(--peach)]">
                     <span>{a.date ? formatDateDe(a.date) : new Date(a.finishedAt).toLocaleDateString("de-CH")} · {a.official ? "Tages-Challenge" : a.mode === "training" ? "Training" : "Archiv"}</span>
-                    <span className="font-display text-base font-medium">{a.total}</span>
+                    <span className="font-num text-base font-semibold text-white">{a.total}</span>
                   </Link>
                 </li>
               ))}

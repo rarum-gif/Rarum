@@ -20,13 +20,13 @@ export default function InfoPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Spielregeln</p>
-      <h1 className="font-display text-4xl font-medium tracking-tight">So funktioniert Rarum</h1>
+      <h1 className="font-display text-6xl">So funktioniert Rarum</h1>
       <p className="mt-3 text-fg-muted">Rarum belohnt nicht nur Wissen, sondern Tiefe: Wer statt der naheliegenden Antwort eine seltene, aber korrekte findet, sammelt die meisten Punkte.</p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
         {items.map((i) => (
-          <div key={i.title} className="rounded-3xl border border-line bg-surface p-6">
+          <div key={i.title} className="glass rounded-3xl p-6">
             <i.icon className="size-6 text-accent" />
-            <h2 className="mt-3 font-display text-lg font-medium">{i.title}</h2>
+            <h2 className="mt-3 font-display text-2xl">{i.title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">{i.text}</p>
           </div>
         ))}

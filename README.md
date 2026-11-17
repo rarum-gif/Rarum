@@ -1,10 +1,37 @@
 # Rarum – das Quiz der seltenen Antworten
 
+**Design: „Sunset Coast“** – eine filmische Küstenmetropole bei Sonnenuntergang und Nacht: Palmen, Skylines, Ocean-Drive-Architektur, Sunset-Verläufe aus Orange, Pink, Violett und Blau. Inspiriert von modernen Open-World-Spielwelten, aber vollständig eigenständig – keine Logos, Screenshots, Figuren oder Markenassets fremder Spiele.
+
 Rarum ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst (ohne Multiple Choice). Je **seltener deine richtige Antwort** ist, desto mehr Punkte bekommst du. Es gibt 15 Themen-Packs. Alles ist **kostenlos**: keine Werbung, keine Abos, keine Paywalls, keine Energie-Limits.
 
 **Tech-Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui-artige Komponenten (Radix) · Lucide · Motion · Supabase (Auth + PostgreSQL + Realtime) · Vitest · Playwright
 
 ---
+
+## Designsystem
+
+- **Schriften** (Google Fonts via `next/font`, selbst gehostet beim Build): Bebas Neue für grosse Überschriften, Manrope für Text und Quiz-Fragen, Space Grotesk für Zahlen und Punkte.
+- **Farben und Tokens**: `src/app/globals.css` (Sunset Orange, Coral, Peach, Gold, Ocean, Tropical Blue, Palm Green, Sand, Midnight Navy, Deep Purple …). Glas-Oberflächen (`.glass`, `.hud`), der Verlauf `.bg-sunset` und die Schrift `.text-sunset`.
+- **Seltenheitsfarben**: Bekannt Grau · Vertraut Blau · Ungewöhnlich Türkis · Selten Violett · Sehr selten Gold · Legendär Sunset-Verlauf.
+- **Hintergrund-Komponente**: `src/components/scene.tsx` (`SceneBackground`, `SceneOverride`). Jede Seite hat ihre eigene Bildwelt:
+
+  | Bereich | Bildwelt |
+  |---|---|
+  | Home | Sunset |
+  | Daily | Ocean Drive |
+  | Packs | Florida Coast |
+  | Unlimited | Tropical Night |
+  | Archiv | Dusk Harbor |
+  | Rangliste | Downtown |
+  | Profil | Marina |
+
+  Pack-Seiten und Quiz-Fragen nehmen automatisch die Welt ihres Packs an. Die Bilder bewegen sich mit einem langsamen Kamerazoom und einer leichten Maus-Parallaxe; `prefers-reduced-motion` wird respektiert.
+- **Bilder**: Alle Bildwelten sind selbst erzeugte Szenen (`src/lib/scenes.ts`), gerendert als WebP mit `npm run assets`.
+  - `public/images/backgrounds/` – 7 Welten, je Desktop- und Mobil-Format
+  - `public/images/themes/` – 15 Pack-Welten, je Vollbild und Karte
+  - `public/images/dashboard/`, `quiz/`, `profile/`
+
+  Insgesamt sind es rund 1,5 MB. Eigene, lizenzierte Fotos lassen sich jederzeit einsetzen: gleichnamige Datei ersetzen oder `coverImage` pro Pack setzen.
 
 ## Schnellstart (Demo-Modus, ohne Datenbank)
 
@@ -86,3 +113,33 @@ Der Seed-Bestand umfasst **107 Fragen mit rund 3 400 gültigen Antworten**, Alia
 ## Eigene Titelbilder
 
 Die Packs nutzen eigene, generierte Landschafts-Illustrationen (SVG). Eigene Fotos (z. B. `public/packs/geografie.jpg`) lassen sich pro Pack als `coverImage` hinterlegen – im Seed (`src/content/packs.ts`) oder über `PUT /api/admin/packs`.
+
+## Online veröffentlichen (Vercel)
+
+1. Lade den Projektordner in ein GitHub-Repository hoch: Neues Repository anlegen und den Inhalt der ZIP-Datei committen.
+2. Auf **vercel.com**: „Add New → Project“, dann das Repository wählen. Das Framework „Next.js“ wird automatisch erkannt.
+3. Unter **Environment Variables** mindestens diese Werte setzen:
+   - `RUN_TOKEN_SECRET`: eine lange, zufällige Zeichenkette
+   - `ADMIN_PASSWORD`
+4. Optional die drei Supabase-Variablen setzen. Ohne Supabase läuft die App auf Vercel im Demo-Modus.
+   - Spielen funktioniert vollständig.
+   - Admin-Änderungen werden ohne Supabase nicht dauerhaft gespeichert, weil das Dateisystem auf Vercel schreibgeschützt ist.
+   - Für den Produktivbetrieb Supabase verbinden.
+5. „Deploy“ klicken. Eine eigene Domain trägst du unter „Settings → Domains“ ein.
+6. In Supabase unter Auth → URL Configuration die Domain sowie `https://deine-domain/auth/callback` als Redirect-URL eintragen.
+
+## Als App installieren (PWA)
+
+Die App bringt ein Manifest, App-Icons (192/512, maskable) und einen Service Worker mit (aktiv auf HTTPS-Domains, nicht auf localhost).
+
+- **Android/Chrome**: Seite öffnen → Menü → „App installieren“ bzw. „Zum Startbildschirm hinzufügen“.
+- **iPhone/iPad (Safari)**: Teilen-Symbol → „Zum Home-Bildschirm“.
+- **Desktop (Chrome/Edge)**: Installations-Symbol in der Adressleiste.
+
+## Produktions-Build
+
+```bash
+npm install
+npm run build
+npm start
+```

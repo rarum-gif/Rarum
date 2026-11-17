@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]", className)} {...props} />;
+  return <div className={cn("glass rounded-[var(--radius-card)] shadow-[var(--shadow-soft)]", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -10,7 +10,7 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("font-display text-lg font-medium tracking-tight", className)} {...props} />;
+  return <h3 className={cn("font-display text-2xl text-white", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -18,5 +18,5 @@ export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDi
 }
 
 export function Eyebrow({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle", className)} {...props} />;
+  return <p className={cn("text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--peach)]", className)} {...props} />;
 }

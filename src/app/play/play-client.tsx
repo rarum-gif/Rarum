@@ -15,6 +15,7 @@ import { useApp } from "@/components/providers";
 import { PackArt } from "@/components/pack-art";
 import { AnimatedNumber, DifficultyDots, RarityMeter, TierBadge, tierVar, useTierLabel } from "@/components/bits";
 import { RunSummary } from "@/components/run-summary";
+import { SceneOverride } from "@/components/scene";
 
 interface RunMeta {
   mode: PlayMode;
@@ -225,6 +226,7 @@ export function PlayClient() {
   if (phase === "summary" && attempt) {
     return (
       <div className="pt-4">
+        <SceneOverride scene={attempt.packId ?? (attempt.mode === "unlimited" ? "night" : "dusk")} />
         <RunSummary attempt={attempt} previous={app.attempts.filter((a) => a.id !== attempt.id)} />
       </div>
     );
@@ -232,15 +234,16 @@ export function PlayClient() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-7rem)] max-w-2xl flex-col">
+      <SceneOverride scene={payload?.question.packId ?? meta?.packId ?? (meta?.mode === "daily" ? "oceandrive" : "night")} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="-ml-3"><ArrowLeft />Zurück</Button>
         {meta && (
           <div className="flex min-w-0 items-center gap-2 text-sm">
-            <span className="truncate font-medium">{meta.title}</span>
+            <span className="truncate text-xs font-bold uppercase tracking-[0.18em] text-white/80">{meta.title}</span>
             {!meta.official && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
           </div>
         )}
-        <div className="font-display text-lg font-medium tabular-nums">{totals.total} <span className="text-xs font-sans text-fg-subtle">Pkt.</span></div>
+        <div className="hud font-num rounded-xl px-3 py-1 text-lg font-semibold text-white"><AnimatedNumber value={totals.total} duration={0.6} /> <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Pkt.</span></div>
       </div>
 
       {meta && meta.total ? <ProgressDots total={meta.total} answered={totals.answered} current={phase === "result" ? totals.answered - 1 : totals.answered} /> : null}
@@ -255,9 +258,9 @@ export function PlayClient() {
           )}
 
           {phase === "error" && (
-            <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-line bg-surface p-8 text-center">
+            <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-3xl p-8 text-center">
               <AlertCircle className="mx-auto mb-3 size-8 text-danger" />
-              <p className="font-display text-xl font-medium">Das hat nicht geklappt</p>
+              <p className="font-display text-4xl text-white">Das hat nicht geklappt</p>
               <p className="mt-2 text-fg-muted">{error}</p>
               <div className="mt-6 flex justify-center gap-3">
                 <Button variant="secondary" onClick={() => { clearRun(key); location.reload(); }}>Neu laden</Button>
@@ -267,14 +270,14 @@ export function PlayClient() {
           )}
 
           {phase === "intro" && meta && (
-            <motion.div key="intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="overflow-hidden rounded-[28px] border border-line bg-surface shadow-[var(--shadow-lift)]">
-              <div className="relative h-40 sm:h-48">
-                <PackArt packId={meta.packId ?? "allgemeinwissen"} image={app.packById(meta.packId)?.coverImage} />
-                <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
+            <motion.div key="intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="glass overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
+              <div className="relative h-44 sm:h-56">
+                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(18,14,34,1)] via-[rgba(18,14,34,0.2)] to-transparent" />
               </div>
               <div className="-mt-10 px-6 pb-8 text-center sm:px-10">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{meta.subtitle}</p>
-                <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">{resumed ? "Weiter geht's" : meta.title}</h1>
+                <p className="text-sunset text-xs font-bold uppercase tracking-[0.24em]">{meta.subtitle}</p>
+                <h1 className="font-display mt-2 text-5xl text-white sm:text-6xl">{resumed ? "Weiter geht's" : meta.title}</h1>
                 <p className="mx-auto mt-3 max-w-md text-fg-muted">
                   {meta.total ? `${meta.total} Fragen` : "Endlos viele Fragen"} · {app.settings.timeLimitSeconds} Sekunden pro Frage · Antwort selbst eintippen. Je seltener deine richtige Antwort, desto mehr Punkte.
                 </p>
@@ -282,7 +285,7 @@ export function PlayClient() {
                 {meta.practiceReason === "past_date" && <Notice icon={BookOpen}>Archiv-Runde: zählt als Training, die damalige Wertung bleibt unverändert.</Notice>}
                 {meta.official && <Notice icon={Sparkles}>Offizielle Tageswertung – jede Challenge zählt nur einmal pro Tag.</Notice>}
                 {meta.repeats > 0 && <Notice icon={Info}>Der Fragenbestand ist begrenzt: {meta.repeats} dieser Fragen gab es bereits an einem früheren Tag. Sie sind entsprechend markiert.</Notice>}
-                <Button size="lg" className="mt-7 min-w-48" onClick={begin} autoFocus>
+                <Button size="lg" variant="sand" className="mt-7 min-w-56" onClick={begin} autoFocus>
                   {resumed ? "Fortsetzen" : "Los geht's"} <ArrowRight />
                 </Button>
               </div>
@@ -291,10 +294,10 @@ export function PlayClient() {
 
           {phase === "preview" && (
             <motion.div key={"preview" + (payload?.index ?? totals.answered)} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.03 }} className="text-center">
-              <p className="text-sm font-medium text-fg-muted">Frage {totals.answered + 1}{meta?.total ? ` von ${meta.total}` : ""}</p>
-              <p className="mt-2 font-display text-4xl font-medium tracking-tight">Bereit?</p>
-              <div className="mx-auto mt-6 h-1 w-40 overflow-hidden rounded-full bg-surface-3">
-                <motion.div className="h-full bg-accent" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: PREVIEW_MS / 1000, ease: "linear" }} />
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--peach)]">Frage {totals.answered + 1}{meta?.total ? ` von ${meta.total}` : ""}</p>
+              <motion.p initial={{ letterSpacing: "0.3em", opacity: 0 }} animate={{ letterSpacing: "0.04em", opacity: 1 }} transition={{ duration: 0.8 }} className="font-display mt-3 text-8xl text-white">Bereit?</motion.p>
+              <div className="mx-auto mt-6 h-1 w-48 overflow-hidden rounded-full bg-white/10">
+                <motion.div className="bg-sunset h-full" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: PREVIEW_MS / 1000, ease: "linear" }} />
               </div>
             </motion.div>
           )}
@@ -332,7 +335,7 @@ export function PlayClient() {
 
 function Notice({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <p className="mx-auto mt-4 flex max-w-md items-start gap-2.5 rounded-2xl bg-surface-2 px-4 py-3 text-left text-sm text-fg-muted">
+    <p className="mx-auto mt-4 flex max-w-md items-start gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-left text-sm text-fg-muted">
       <Icon className="mt-0.5 size-4 shrink-0 text-accent" />
       <span>{children}</span>
     </p>
@@ -343,7 +346,7 @@ function ProgressDots({ total, answered, current }: { total: number; answered: n
   return (
     <div className="flex gap-1.5" aria-label={`Frage ${Math.min(answered + 1, total)} von ${total}`}>
       {Array.from({ length: total }, (_, i) => (
-        <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-colors duration-500", i < answered ? "bg-accent" : i === current ? "bg-fg-subtle/50" : "bg-surface-3")} />
+        <span key={i} className={cn("h-1.5 flex-1 rounded-full transition-all duration-500", i < answered ? "bg-sunset shadow-[0_0_10px_rgba(255,106,85,0.8)]" : i === current ? "bg-white/45" : "bg-white/12")} />
       ))}
     </div>
   );
@@ -406,24 +409,27 @@ function QuestionView({ payload, offset, input, setInput, submitting, onSubmit, 
       className="flex flex-col"
     >
       <div className="mb-6 flex items-center justify-between">
-        <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-fg-muted">
+        <span className="hud inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
           <span className="size-2 rounded-full" style={{ background: packAccent }} />
           {packName} · {payload.question.topic}
           <DifficultyDots value={payload.question.difficulty} className="ml-1 text-fg-subtle" />
         </span>
-        <div className="relative size-16" role="timer" aria-live="off" aria-label={`${secs} Sekunden übrig`}>
-          <svg viewBox="0 0 64 64" className="size-16 -rotate-90">
-            <circle cx="32" cy="32" r={R} fill="none" stroke="var(--surface-3)" strokeWidth="4" />
-            <circle cx="32" cy="32" r={R} fill="none" stroke={urgent ? "var(--danger)" : "var(--accent)"} strokeWidth="4" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)} style={{ transition: "stroke 0.3s" }} />
+        <div className={cn("relative size-[72px] rounded-full", urgent && "animate-[pulse-soft_1s_ease-in-out_infinite]")} role="timer" aria-live="off" aria-label={`${secs} Sekunden übrig`}>
+          <svg viewBox="0 0 64 64" className="size-[72px] -rotate-90 drop-shadow-[0_0_12px_rgba(255,106,85,0.45)]">
+            <defs>
+              <linearGradient id="timer-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffb347" /><stop offset="0.5" stopColor="#ff7a45" /><stop offset="1" stopColor="#ff4f8b" /></linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r={R} fill="rgba(12,8,20,0.55)" stroke="rgba(255,255,255,0.12)" strokeWidth="4" />
+            <circle cx="32" cy="32" r={R} fill="none" stroke={urgent ? "#ff5d73" : "url(#timer-grad)"} strokeWidth="4" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)} style={{ transition: "stroke 0.3s" }} />
           </svg>
-          <span className={cn("absolute inset-0 flex items-center justify-center font-display text-xl font-medium tabular-nums", urgent && "text-danger")}>{secs}</span>
+          <span className={cn("font-num absolute inset-0 flex items-center justify-center text-2xl font-semibold text-white", urgent && "text-[#ff8a98]")}>{secs}</span>
         </div>
       </div>
 
       {payload.question.repeat && (
-        <p className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-xs text-fg-muted"><Repeat2 className="size-3.5" />Wiederholung aus einem früheren Set</p>
+        <p className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-fg-muted"><Repeat2 className="size-3.5" />Wiederholung aus einem früheren Set</p>
       )}
-      <h2 className="font-display text-[30px] font-medium leading-[1.15] tracking-tight text-balance sm:text-[40px]">{payload.question.prompt}</h2>
+      <h2 className="text-[30px] font-extrabold leading-[1.12] tracking-tight text-balance text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] sm:text-[46px]">{payload.question.prompt}</h2>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <input
@@ -439,14 +445,14 @@ function QuestionView({ payload, offset, input, setInput, submitting, onSubmit, 
           enterKeyHint="send"
           placeholder="Deine Antwort …"
           aria-label="Deine Antwort"
-          className="h-16 flex-1 rounded-2xl border-2 border-line bg-surface px-5 text-xl text-fg shadow-[var(--shadow-soft)] transition-colors placeholder:text-fg-subtle focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/15 disabled:opacity-60"
+          className="h-16 flex-1 rounded-2xl border border-white/20 bg-[rgba(14,10,26,0.7)] px-5 text-xl font-semibold text-white shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all placeholder:font-medium placeholder:text-white/40 focus:border-[var(--peach)] focus:outline-none focus:ring-4 focus:ring-[rgba(255,122,69,0.25)] disabled:opacity-60"
         />
-        <Button type="submit" size="lg" className="h-16 rounded-2xl px-7" disabled={submitting}>
+        <Button type="submit" size="lg" className="h-16 rounded-2xl px-8 uppercase tracking-[0.1em]" disabled={submitting}>
           {submitting ? <Loader2 className="animate-spin" /> : <Send />}
           Antworten
         </Button>
       </div>
-      <p className="mt-3 text-xs text-fg-subtle">Enter zum Bestätigen · Gross-/Kleinschreibung und kleine Tippfehler sind egal.</p>
+      <p className="mt-3 text-xs text-white/50">Enter zum Bestätigen · Gross-/Kleinschreibung und kleine Tippfehler sind egal.</p>
     </motion.form>
   );
 }
@@ -466,26 +472,27 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col">
-      <p className="mb-4 text-sm text-fg-muted">{question.prompt}</p>
-      <div className="overflow-hidden rounded-[28px] border border-line bg-surface shadow-[var(--shadow-lift)]">
-        <div className="relative p-6 sm:p-8" style={ok && result.tier ? { background: `linear-gradient(160deg, color-mix(in oklab, ${tierVar(result.tier)} 16%, transparent), transparent 60%)` } : undefined}>
+      <p className="mb-4 text-sm font-semibold text-white/70">{question.prompt}</p>
+      <div className="glass relative overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
+        {ok && result.tier && <motion.div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full blur-3xl" style={{ background: result.tier === "legendary" ? "var(--sunset-gradient)" : tierVar(result.tier) }} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 0.45, scale: 1 }} transition={{ duration: 0.9 }} />}
+        <div className="relative p-6 sm:p-8">
           <div className={cn("flex items-start gap-3", head.tone)}>
             <motion.span initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 300, damping: 14 }}>
               <Icon className="size-7" />
             </motion.span>
-            <h2 className="font-display text-2xl font-medium leading-tight text-fg">{head.title}</h2>
+            <h2 className="font-display text-4xl leading-none text-white">{head.title}</h2>
           </div>
 
           <dl className="mt-6 grid gap-4 sm:grid-cols-[1fr_auto]">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wider text-fg-subtle">Deine Antwort</dt>
-              <dd className="mt-1 font-display text-2xl font-medium">{ok ? result.answerText : result.input || "–"}</dd>
+              <dd className="mt-1 text-2xl font-extrabold text-white">{ok ? result.answerText : result.input || "–"}</dd>
               {ok && result.matchKind === "fuzzy" && <dd className="mt-1 text-sm text-fg-muted">Erkannt aus „{result.input}“ – kleine Tippfehler verzeihen wir.</dd>}
               {ok && result.matchKind === "alias" && result.input && <dd className="mt-1 text-sm text-fg-muted">„{result.input}“ ist als Schreibweise hinterlegt.</dd>}
             </div>
             <div className="sm:text-right">
               <dt className="text-xs font-medium uppercase tracking-wider text-fg-subtle">Punkte</dt>
-              <dd className="mt-1 font-display text-5xl font-medium" style={result.tier ? { color: tierVar(result.tier) } : undefined}>
+              <dd className={cn("font-num mt-1 text-6xl font-bold", result.tier === "legendary" && "text-sunset")} style={result.tier && result.tier !== "legendary" ? { color: tierVar(result.tier), textShadow: `0 0 30px ${tierVar(result.tier)}` } : undefined}>
                 +<AnimatedNumber value={result.points} duration={0.8} />
               </dd>
             </div>
@@ -503,7 +510,7 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
           )}
 
           {result.explanation && (
-            <p className="mt-6 flex gap-2.5 rounded-2xl bg-bg-elevated p-4 text-[15px] leading-relaxed text-fg-muted">
+            <p className="mt-6 flex gap-2.5 rounded-2xl border border-white/8 bg-white/[0.05] p-4 text-[15px] leading-relaxed text-fg-muted">
               <Info className="mt-0.5 size-4 shrink-0 text-accent" />
               <span>{result.explanation}</span>
             </p>
@@ -523,7 +530,7 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
               <p className="mb-2 text-xs font-medium uppercase tracking-wider text-fg-subtle">{ok ? "Andere gültige Antworten" : "Gültig wären z. B."}</p>
               <div className="flex flex-wrap gap-2">
                 {result.examples.map((e) => (
-                  <span key={e.text} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-bg-elevated px-3 py-1 text-sm">
+                  <span key={e.text} className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-sm text-white">
                     <span className="size-1.5 rounded-full" style={{ background: tierVar(e.tier) }} />
                     {e.text}
                     <span className="text-xs text-fg-subtle">{tierLabel(e.tier)}</span>
@@ -551,7 +558,7 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
         {mode === "unlimited" && !last && (
           <Button variant="secondary" size="lg" onClick={onEnd}><LogOut />Runde beenden</Button>
         )}
-        <Button size="lg" onClick={onNext} autoFocus>
+        <Button size="lg" variant="sand" onClick={onNext} autoFocus>
           {last ? "Ergebnis anzeigen" : "Weiter"} <ArrowRight />
         </Button>
       </div>
@@ -582,7 +589,7 @@ function ReportDialog({ open, onOpenChange, questionId, answer, onDone }: { open
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent title="Antwort melden" description="Unsere Redaktion prüft deine Antwort und nimmt sie bei Bedarf in die Liste auf.">
-        <div className="rounded-xl bg-surface-2 px-4 py-3 font-medium">„{answer}“</div>
+        <div className="rounded-xl bg-white/10 px-4 py-3 font-semibold text-white">„{answer}“</div>
         <label className="mt-4 block text-sm font-medium text-fg-muted" htmlFor="report-note">Hinweis oder Quelle (optional)</label>
         <Textarea id="report-note" className="mt-1.5" rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="z. B. ein Link, der die Antwort belegt" />
         {err && <p className="mt-2 text-sm text-danger">{err}</p>}

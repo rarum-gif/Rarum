@@ -15,18 +15,24 @@ export function useTierLabel() {
   return React.useCallback((t: TierId) => settings.tiers.find((x) => x.id === t)?.label ?? t, [settings.tiers]);
 }
 
-/** Markenzeichen: ein stilisiertes Blatt mit Facette – „das seltene Fundstück“ */
+/** Markenzeichen: Sonne über dem Horizont mit Palme – eigenständiges Logo */
 export function Logo({ className, withText = true }: { className?: string; withText?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 40 40" className="size-9 shrink-0" aria-hidden>
-        <rect width="40" height="40" rx="12" fill="var(--forest-800)" />
-        <path d="M20 8 C 29 12, 31 22, 20 32 C 9 22, 11 12, 20 8 Z" fill="var(--sand-300)" />
-        <path d="M20 8 C 23 16, 23 24, 20 32" stroke="var(--forest-800)" strokeWidth="1.4" fill="none" />
-        <path d="M20 18 L26 15 M20 24 L14 21" stroke="var(--forest-800)" strokeWidth="1.1" />
-        <circle cx="29.5" cy="10.5" r="2.6" fill="var(--tier-legendary)" />
+      <svg viewBox="0 0 40 40" className="size-9 shrink-0 drop-shadow-[0_4px_14px_rgba(255,106,85,0.55)]" aria-hidden>
+        <defs>
+          <linearGradient id="logo-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a1745" /><stop offset="1" stopColor="#4a1630" /></linearGradient>
+          <linearGradient id="logo-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd36e" /><stop offset="0.55" stopColor="#ff7a45" /><stop offset="1" stopColor="#ff4f8b" /></linearGradient>
+        </defs>
+        <rect width="40" height="40" rx="11" fill="url(#logo-sky)" />
+        <circle cx="20" cy="23" r="11" fill="url(#logo-sun)" />
+        <rect x="6" y="25" width="28" height="1.6" fill="#2a1745" />
+        <rect x="6" y="28.5" width="28" height="2.2" fill="#2a1745" />
+        <rect x="4" y="31.5" width="32" height="9" fill="#1b1530" />
+        <path d="M27.5 32 C 27.8 26, 28.6 20, 30.6 15.5" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M30.6 15.5 c -3 -1.8 -6 -1 -7.5 1 M30.6 15.5 c 2.6 -1.6 5.4 -0.8 6.6 1.4 M30.6 15.5 c -1 -2.6 -3.6 -3.6 -6 -3 M30.6 15.5 c 1.6 -2.4 4 -2.8 5.8 -1.8" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
       </svg>
-      {withText && <span className="font-display text-[22px] font-semibold tracking-tight">Rarum</span>}
+      {withText && <span className="font-display text-[28px] leading-none tracking-[0.08em] text-white">Rarum</span>}
     </span>
   );
 }
@@ -45,6 +51,13 @@ export function AvatarBubble({ id, size = 36, className }: { id?: string | null;
 
 export function TierBadge({ tier, className }: { tier: TierId; className?: string }) {
   const label = useTierLabel()(tier);
+  if (tier === "legendary")
+    return (
+      <span className={cn("bg-sunset inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-[0_4px_14px_-4px_rgba(255,106,85,0.9)]", className)}>
+        <span className="size-1.5 rounded-full bg-white" />
+        {label}
+      </span>
+    );
   return (
     <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold", className)} style={{ color: tierVar(tier), background: `color-mix(in oklab, ${tierVar(tier)} 14%, transparent)` }}>
       <span className="size-1.5 rounded-full" style={{ background: tierVar(tier) }} />
@@ -62,7 +75,7 @@ export function RarityMeter({ tier, animate = true, className }: { tier: TierId 
         <motion.span
           key={t}
           className="block w-full rounded-full"
-          style={{ height: 6 + i * 3, background: i <= idx ? tierVar(t) : "var(--surface-3)" }}
+          style={{ height: 6 + i * 3, background: i <= idx ? (t === "legendary" ? "var(--sunset-gradient)" : tierVar(t)) : "var(--surface-3)", boxShadow: i <= idx ? `0 0 14px -2px ${tierVar(t)}` : undefined }}
           initial={animate ? { scaleY: 0.3, opacity: 0.4 } : false}
           animate={{ scaleY: 1, opacity: 1 }}
           transition={{ delay: animate ? 0.15 + i * 0.09 : 0, type: "spring", stiffness: 260, damping: 18 }}
@@ -73,13 +86,14 @@ export function RarityMeter({ tier, animate = true, className }: { tier: TierId 
 }
 
 export function AnimatedNumber({ value, className, duration = 0.9 }: { value: number; className?: string; duration?: number }) {
+  // Zahlen immer in der klaren Statistik-Schrift
   const mv = useMotionValue(0);
   const spring = useSpring(mv, { duration: duration * 1000, bounce: 0 });
   const text = useTransform(spring, (v) => fmt(Math.round(v)));
   React.useEffect(() => {
     mv.set(value);
   }, [mv, value]);
-  return <motion.span className={cn("tabular-nums", className)}>{text}</motion.span>;
+  return <motion.span className={cn("font-num tabular-nums", className)}>{text}</motion.span>;
 }
 
 export function useCountdown(targetIso: string | null | undefined, offset = 0) {
@@ -110,12 +124,12 @@ export function ResetCountdown({ className, prefix = "Neue Fragen in" }: { class
 
 export function StatTile({ label, value, hint, icon: Icon, className }: { label: string; value: React.ReactNode; hint?: React.ReactNode; icon?: React.ComponentType<{ className?: string }>; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border border-line bg-surface p-4", className)}>
-      <div className="flex items-center gap-2 text-xs font-medium text-fg-subtle">
-        {Icon && <Icon className="size-4" />}
+    <div className={cn("hud group rounded-2xl p-4 transition-transform duration-300 hover:-translate-y-0.5", className)}>
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">
+        {Icon && <Icon className="size-4 text-[var(--peach)] transition-transform duration-300 group-hover:scale-110" />}
         {label}
       </div>
-      <div className="mt-1.5 font-display text-2xl font-medium tracking-tight">{value}</div>
+      <div className="font-num mt-1.5 text-2xl font-semibold tracking-tight text-white">{value}</div>
       {hint && <div className="mt-0.5 text-xs text-fg-muted">{hint}</div>}
     </div>
   );
@@ -125,7 +139,7 @@ export function LocalDataNotice({ className }: { className?: string }) {
   const { accountsEnabled, user } = useApp();
   if (user) return null;
   return (
-    <div className={cn("flex items-start gap-3 rounded-2xl border border-dashed border-line-strong bg-surface-2/60 p-4 text-sm text-fg-muted", className)}>
+    <div className={cn("glass flex items-start gap-3 rounded-2xl border-dashed p-4 text-sm text-fg-muted", className)}>
       <HardDrive className="mt-0.5 size-4 shrink-0" />
       <p>
         <span className="font-medium text-fg">Lokale Daten:</span> Deine Ergebnisse werden nur in diesem Browser gespeichert.{" "}
@@ -137,11 +151,11 @@ export function LocalDataNotice({ className }: { className?: string }) {
 
 export function EmptyState({ icon: Icon = Sprout, title, children, className }: { icon?: React.ComponentType<{ className?: string }>; title: string; children?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-col items-center rounded-3xl border border-dashed border-line-strong px-6 py-12 text-center", className)}>
+    <div className={cn("glass flex flex-col items-center rounded-3xl px-6 py-12 text-center", className)}>
       <span className="mb-4 rounded-full bg-accent-soft p-3 text-accent">
         <Icon className="size-6" />
       </span>
-      <h3 className="font-display text-lg font-medium">{title}</h3>
+      <h3 className="font-display text-2xl">{title}</h3>
       {children && <div className="mt-2 max-w-sm text-sm text-fg-muted">{children}</div>}
     </div>
   );
@@ -150,9 +164,9 @@ export function EmptyState({ icon: Icon = Sprout, title, children, className }: 
 export function PageHeader({ eyebrow, title, children, className }: { eyebrow?: string; title: string; children?: React.ReactNode; className?: string }) {
   return (
     <header className={cn("mb-8 animate-rise", className)}>
-      {eyebrow && <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>}
-      <h1 className="font-display text-3xl font-medium tracking-tight sm:text-4xl">{title}</h1>
-      {children && <div className="mt-3 max-w-2xl text-fg-muted">{children}</div>}
+      {eyebrow && <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-sunset">{eyebrow}</p>}
+      <h1 className="font-display text-5xl text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] sm:text-7xl">{title}</h1>
+      {children && <div className="mt-4 max-w-2xl text-[15px] leading-relaxed text-fg-muted">{children}</div>}
     </header>
   );
 }

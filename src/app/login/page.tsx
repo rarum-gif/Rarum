@@ -74,7 +74,7 @@ export default function LoginPage() {
           {sent ? (
             <div className="py-6 text-center">
               <MailCheck className="mx-auto size-10 text-accent" />
-              <p className="mt-3 font-display text-xl font-medium">Fast geschafft</p>
+              <p className="mt-3 font-display text-3xl">Fast geschafft</p>
               <p className="mt-2 text-sm text-fg-muted">Wir haben dir eine Bestätigungs-E-Mail an {email} geschickt. Klicke auf den Link, um dein Konto zu aktivieren.</p>
             </div>
           ) : (

@@ -5,7 +5,7 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
   const key = await answerKey(request);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Deine heutige Wissens-Challenge wartet/ })).toBeVisible();
-  await page.getByRole("link", { name: /Jetzt spielen/ }).click();
+  await page.getByRole("link", { name: /Play now/i }).click();
 
   await expect(page.getByText("Offizielle Tageswertung")).toBeVisible();
   await page.getByRole("button", { name: /Los geht's/ }).click();
@@ -35,7 +35,7 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
 
   // Startseite zeigt Ergebnis, Serie und Punkte
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Heutige Challenge geschafft." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission erfüllt." })).toBeVisible();
   await expect(page.getByTitle("Aktuelle Serie")).toContainText("1");
 
   // Wiederholung ist nur Training

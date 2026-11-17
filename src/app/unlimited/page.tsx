@@ -17,18 +17,18 @@ export default function UnlimitedPage() {
       <PageHeader eyebrow="Unlimited" title="Endlos trainieren">
         Zufällige Fragen aus allen 15 Themenwelten, so lange du willst. Kein Tageslimit, keine Energie, keine Pausen – beende die Runde, wann du möchtest.
       </PageHeader>
-      <section className="relative overflow-hidden rounded-[28px] border border-line bg-surface shadow-[var(--shadow-lift)]">
-        <div className="grid grid-cols-5 opacity-90">
-          {packs.slice(0, 5).map((p) => <div key={p.id} className="h-24 sm:h-32"><PackArt packId={p.id} image={p.coverImage} /></div>)}
+      <section className="glass relative overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
+        <div className="flex h-32 sm:h-44">
+          {packs.map((p) => <div key={p.id} className="min-w-0 flex-1 transition-[flex] duration-500 hover:flex-[3]"><PackArt packId={p.id} image={p.coverImage} /></div>)}
         </div>
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <ul className="space-y-2 text-sm text-fg-muted">
-              <li className="flex items-center gap-2"><Shuffle className="size-4 text-accent" />Immer neue Kombinationen aus allen Packs</li>
-              <li className="flex items-center gap-2"><Timer className="size-4 text-accent" />{settings.timeLimitSeconds} Sekunden pro Frage</li>
-              <li className="flex items-center gap-2"><InfinityIcon className="size-4 text-accent" />Raritäts-Punkte wie in der Daily Challenge</li>
+              <li className="flex items-center gap-2"><Shuffle className="size-4 text-[var(--peach)]" />Immer neue Kombinationen aus allen Packs</li>
+              <li className="flex items-center gap-2"><Timer className="size-4 text-[var(--peach)]" />{settings.timeLimitSeconds} Sekunden pro Frage</li>
+              <li className="flex items-center gap-2"><InfinityIcon className="size-4 text-[var(--peach)]" />Raritäts-Punkte wie in der Daily Challenge</li>
             </ul>
-            <Button asChild size="lg"><Link href="/play?mode=unlimited">Unlimited starten <ArrowRight /></Link></Button>
+            <Button asChild size="lg" variant="sand"><Link href="/play?mode=unlimited">Start unlimited <ArrowRight /></Link></Button>
           </div>
         </div>
       </section>
@@ -40,10 +40,10 @@ export default function UnlimitedPage() {
       {runs.length > 0 && (
         <Card>
           <CardContent>
-            <p className="mb-3 font-display text-lg font-medium">Letzte Runden</p>
+            <p className="font-display mb-3 text-2xl text-white">Letzte Runden</p>
             <ul className="divide-y divide-line">
               {runs.slice(0, 8).map((a) => (
-                <li key={a.id}><Link href={`/ergebnis/${a.id}`} className="flex justify-between py-2.5 text-sm hover:text-accent"><span>{new Date(a.finishedAt).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })} · {a.answers.length} Fragen</span><span className="font-display font-medium">{a.total}</span></Link></li>
+                <li key={a.id}><Link href={`/ergebnis/${a.id}`} className="flex justify-between py-2.5 text-sm hover:text-[var(--peach)]"><span>{new Date(a.finishedAt).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })} · {a.answers.length} Fragen</span><span className="font-num font-semibold text-white">{a.total}</span></Link></li>
               ))}
             </ul>
           </CardContent>

@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test --trace off",
     "content:validate": "tsx scripts/validate-content.ts",
-    "db:seed-sql": "tsx scripts/generate-seed-sql.ts"
+    "db:seed-sql": "tsx scripts/generate-seed-sql.ts",
+    "assets": "tsx scripts/generate-assets.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",

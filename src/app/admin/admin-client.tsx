@@ -58,7 +58,7 @@ function Login({ onDone, defaultPw }: { onDone: () => void; defaultPw: boolean }
     <Card className="mx-auto max-w-sm">
       <CardContent>
         <ShieldAlert className="size-8 text-accent" />
-        <h1 className="mt-3 font-display text-2xl font-medium">Redaktion</h1>
+        <h1 className="mt-3 font-display text-3xl">Redaktion</h1>
         <p className="mt-1 text-sm text-fg-muted">Geschützter Admin-Bereich für Fragen, Tages-Sets und Meldungen.</p>
         <form onSubmit={submit} className="mt-5 space-y-3">
           <Input type="password" placeholder="Admin-Passwort" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus />
@@ -219,7 +219,7 @@ function QuestionsTab({ data, reload }: { data: AdminData; reload: () => void })
       </div>
       {msg && <p className="rounded-xl bg-surface-2 px-4 py-2 text-sm">{msg}</p>}
       <p className="text-sm text-fg-muted">{list.length} Fragen · {list.reduce((s, x) => s + x.answers.length, 0)} Antworten</p>
-      <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="overflow-hidden glass rounded-2xl">
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-left text-xs text-fg-subtle"><tr><th className="p-3 font-medium">Frage</th><th className="hidden p-3 font-medium md:table-cell">Pack</th><th className="p-3 font-medium">Antworten</th><th className="hidden p-3 font-medium sm:table-cell">Verwendet</th><th className="p-3 font-medium">Status</th><th className="p-3" /></tr></thead>
           <tbody className="divide-y divide-line">
@@ -357,7 +357,7 @@ function ReportsTab({ data, reload }: { data: AdminData; reload: () => void }) {
               <Flag className="size-5 text-accent" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-fg-muted">{r.prompt}</p>
-                <p className="font-display text-lg font-medium">„{r.answerText}“</p>
+                <p className="font-display text-2xl">„{r.answerText}“</p>
                 {r.note && <p className="text-sm text-fg-muted">Hinweis: {r.note}</p>}
                 <p className="text-xs text-fg-subtle">{new Date(r.createdAt).toLocaleString("de-CH")} · {r.status}</p>
               </div>
@@ -514,7 +514,7 @@ export function AdminClient({ defaultPw }: { defaultPw: boolean }) {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent"><Settings2 className="size-4" />Redaktion</p>
-          <h1 className="font-display text-3xl font-medium tracking-tight">Admin-Dashboard</h1>
+          <h1 className="font-display text-5xl">Admin-Dashboard</h1>
           <p className="mt-1 text-sm text-fg-muted">{data.questions.length} Fragen · {verified} geprüft · Speicher: {data.storeKind === "supabase" ? "Supabase" : "lokale Datei (data/store.json)"}{!data.persistent && " – NICHT dauerhaft!"}</p>
         </div>
         <div className="flex gap-2">

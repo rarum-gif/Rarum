@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Bebas_Neue, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/components/providers";
 import { AppShell } from "@/components/app-shell";
-import { initialThemeScript } from "@/lib/theme";
 import { getStore } from "@/lib/server/store";
 import { getOverview } from "@/lib/server/daily";
 import { isSupabaseConfigured } from "@/lib/config";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap", axes: ["SOFT", "WONK", "opsz"] });
+const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-bebas", display: "swap" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
+const space = Space_Grotesk({ subsets: ["latin"], variable: "--font-space", display: "swap" });
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +24,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f2e8" },
-    { media: "(prefers-color-scheme: dark)", color: "#121a15" },
+    { color: "#0c0a14" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -36,9 +35,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const content = await getStore().getContent();
   const overview = await getOverview().catch(() => null);
   return (
-    <html lang="de-CH" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="de-CH" className={`dark ${bebas.variable} ${manrope.variable} ${space.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: initialThemeScript() }} />
       </head>
       <body className="font-sans antialiased">
         <AppProvider packs={content.packs} settings={content.settings} accountsEnabled={isSupabaseConfigured()} initialOverview={overview}>
