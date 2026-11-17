@@ -123,10 +123,16 @@ const FICTION_PROMPT = /figur/i;
 const NAME_FILLERS = new Set(["der", "die", "das", "von", "van", "de", "del", "da", "di", "du", "le", "la", "jr", "junior", "senior", "sohn", "grosse", "gross", "altere", "jungere", "heilige"]);
 
 /** Kennzeichnende Namensteile einer Personen-Antwort (Nachname, ggf. Vorname bei Herrschern). */
+/** Titel und Allerweltswörter taugen nicht als Kurzname ("Man" ist nicht "Bumblebee Man"). */
+const GENERIC_TOKENS = new Set(["man", "mann", "guy", "king", "konig", "queen", "konigin", "mr", "mrs", "ms", "dr", "sir", "ser", "lady", "lord", "captain", "kapitan", "professor", "prof", "maester", "septa", "chief", "officer", "onkel", "uncle", "tante", "baby", "little", "big", "old", "alte", "alter", "junge", "boy", "girl", "kid", "the", "und", "and", "of", "in", "am", "im"]);
+
 function nameTokens(form: string, firstToo = false): string[] {
-  const parts = form.split(" ").filter((p) => p && !/^\d+$/.test(p) && !NAME_FILLERS.has(p));
-  if (parts.length < 2) return [];
-  return firstToo && parts[0].length >= 3 ? [parts[parts.length - 1], parts[0]] : [parts[parts.length - 1]];
+  const all = form.split(" ").filter((p) => p && !/^\d+$/.test(p) && !NAME_FILLERS.has(p));
+  if (all.length < 2) return [];
+  const parts = all.filter((p) => !GENERIC_TOKENS.has(p));
+  if (!parts.length) return [];
+  const last = parts[parts.length - 1];
+  return firstToo && parts[0].length >= 3 && parts[0] !== last ? [last, parts[0]] : [last];
 }
 
 /**

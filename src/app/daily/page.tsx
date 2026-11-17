@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock, Gem, ListChecks, Repeat2, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, Gem, ListChecks, Repeat2 } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DifficultyDots, PageHeader, ResetCountdown, TierBadge } from "@/components/bits";
+import { PageHeader, ResetCountdown } from "@/components/bits";
 import { HeroArt } from "@/components/hero-art";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { addDays, formatDateDe } from "@/lib/time";
@@ -20,7 +20,7 @@ export default function DailyPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow="Daily Quiz" title="Die tägliche Challenge" />
+      <PageHeader title="Daily Challenge" />
 
       <section className="relative isolate overflow-hidden rounded-[28px] border border-white/12 text-white shadow-[var(--shadow-lift)]">
         <HeroArt className="kenburns absolute inset-0 -z-10 h-full w-full" src="/images/backgrounds/oceandrive.webp" />
@@ -33,7 +33,6 @@ export default function DailyPage() {
               <li className="flex items-center gap-2"><ListChecks className="size-4" />{daily?.count ?? settings.dailyQuestionCount} Fragen</li>
               <li className="flex items-center gap-2"><Clock className="size-4" />{settings.timeLimitSeconds} Sek. pro Frage</li>
               <li className="flex items-center gap-2"><Gem className="size-4" />max. {fmt(max)} Punkte</li>
-              {daily && <li className="flex items-center gap-2">Schwierigkeit <DifficultyDots value={daily.difficulty} /></li>}
             </ul>
           </div>
           <div className="flex flex-col items-start gap-3 sm:items-end">
@@ -50,7 +49,7 @@ export default function DailyPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><CalendarDays className="size-5 text-[var(--peach)]" />Deine Woche</CardTitle></CardHeader>
           <CardContent>
@@ -70,23 +69,8 @@ export default function DailyPage() {
             <p className="mt-4 text-sm text-fg-muted">Aktuelle Serie: <span className="font-semibold text-fg">{stats.streak.current} Tage</span> · Längste: {stats.streak.longest}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="size-5 text-[var(--peach)]" />So funktioniert die Wertung</CardTitle></CardHeader>
-          <CardContent className="space-y-2.5">
-            {settings.tiers.map((t) => (
-              <div key={t.id} className="flex items-center justify-between">
-                <TierBadge tier={t.id} />
-                <span className="font-num font-semibold text-white">{t.points} Pkt.</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Button asChild variant="secondary"><Link href="/archiv">Vergangene Challenges im Archiv</Link></Button>
-        <Button asChild variant="ghost"><Link href="/info">Spielregeln im Detail</Link></Button>
-      </div>
     </div>
   );
 }

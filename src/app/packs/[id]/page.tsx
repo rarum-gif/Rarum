@@ -7,7 +7,7 @@ import { useApp } from "@/components/providers";
 import { PackArt } from "@/components/pack-art";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DifficultyDots, ResetCountdown, StatTile } from "@/components/bits";
+import { ResetCountdown, StatTile } from "@/components/bits";
 import { SceneOverride } from "@/components/scene";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { formatDateDe } from "@/lib/time";
@@ -35,27 +35,18 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
           <PackArt packId={pack.id} image={pack.coverImage} alt={pack.name} variant="full" className="kenburns" />
           <div className="absolute inset-0 bg-gradient-to-t from-[rgba(18,14,34,1)] via-[rgba(18,14,34,0.25)] to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 text-white sm:p-10">
-            <p className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: pack.accentSoft }}>Themen-Pack · {pack.short}</p>
             <h1 className="font-display mt-2 text-6xl drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)] sm:text-8xl">{pack.name}</h1>
-            <p className="mt-2 max-w-xl text-lg text-white/85">{pack.tagline}</p>
           </div>
         </div>
-        <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[1.3fr_1fr]">
-          <div>
-            <p className="text-fg-muted">{pack.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {pack.topics.map((t) => <span key={t} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">{t}</span>)}
-            </div>
-          </div>
+        <div className="p-6 sm:p-8">
           <div className="hud relative overflow-hidden rounded-3xl p-5 text-white">
             <span className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${pack.accent}, #ff7a45, #ff4f8b)` }} />
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--peach)]">Die heutige {pack.short}-Challenge</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--peach)]">Heute</p>
             {set ? (
               <>
                 <ul className="mt-3 space-y-1.5 text-sm">
                   <li className="flex items-center gap-2"><ListChecks className="size-4" />{set.count} Fragen{set.repeats ? ` · ${set.repeats} Wiederholung${set.repeats > 1 ? "en" : ""}` : " · alle neu"}</li>
                   <li className="flex items-center gap-2"><Gem className="size-4" />Bis zu {fmt(max)} Punkte</li>
-                  <li className="flex items-center gap-2">Schwierigkeit <DifficultyDots value={set.difficulty} /></li>
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {played ? (
@@ -69,7 +60,7 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </>
             ) : (
-              <p className="mt-3 text-sm">Für heute sind in diesem Pack noch keine geprüften Fragen verfügbar.</p>
+              <p className="mt-3 text-sm">Heute keine Fragen.</p>
             )}
             <ResetCountdown className="mt-4 text-xs text-white/70" />
           </div>
@@ -80,8 +71,7 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-[var(--peach)]" />Training</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm text-fg-muted">Zufällige Fragen, beliebig oft.</p>
-            <Button asChild variant="secondary" className="mt-4"><Link href={`/play?mode=training&pack=${pack.id}`}>Training starten</Link></Button>
+            <Button asChild variant="secondary"><Link href={`/play?mode=training&pack=${pack.id}`}>Training starten</Link></Button>
           </CardContent>
         </Card>
         <Card>

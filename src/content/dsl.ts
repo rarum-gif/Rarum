@@ -1,4 +1,6 @@
 import type { Answer, Question, ReviewStatus, SourceRef, TierId, WrongAnswer } from "@/lib/types";
+import { parseExtra } from "./extras/parse";
+import { compact, normalize } from "@/lib/game/matching";
 
 // Kompaktes Autorenformat für Seed-Inhalte. Wird beim Laden in vollständige
 // Question-Objekte umgewandelt (identisch zum JSON-Import/Export-Format).
@@ -73,4 +75,54 @@ export function defineQuestions(packId: string, defs: QDef[]): Question[] {
       updatedAt: SEED_DATE,
     };
   });
+}
+
+/**
+ * Listen-Format für Fragen mit langen Antwortlisten (gleiches Zeilenformat wie die
+ * Antwort-Erweiterungen). Zeilen mit „x “ am Anfang sind bekannte Falschantworten:
+ *
+ *   K Inception | Alias; Alias | Erklärung
+ *   #auto            ← ab hier Stufe aus der Reihenfolge (ungewöhnlich … legendär)
+ *   x From Dusk Till Dawn | | Drehbuch von Tarantino, Regie Robert Rodriguez.
+ */
+export interface LDef extends Omit<QDef, "answers" | "wrong"> {
+  list: string;
+}
+
+export function defineListQuestions(packId: string, defs: LDef[]): Question[] {
+  return defineQuestions(
+    packId,
+    defs.map(({ list, ...d }) => {
+      const keep: string[] = [];
+      const wrong: W[] = [];
+      for (const raw of list.split("\n")) {
+        const line = raw.trim();
+        if (line.startsWith("x ")) {
+          const [text, aliases = "", explanation = ""] = line.slice(2).split("|").map((s) => s.trim());
+          wrong.push([text, explanation || "Das gehört nicht dazu.", aliases ? aliases.split(";").map((s) => s.trim()).filter(Boolean) : []]);
+        } else if (line === "#auto") keep.push("#end", "#auto"); // explizite Stufen davor bleiben erhalten
+        else keep.push(raw);
+      }
+      return { ...d, answers: dedupe(parseExtra(keep.join("\n"))), wrong };
+    }),
+  );
+}
+
+/** Doppelte Einträge (gleiche Schreibweise oder gleicher Alias) zusammenführen – die erste Stufe gewinnt. */
+function dedupe(list: A[]): A[] {
+  const owner = new Map<string, A>();
+  const out: A[] = [];
+  for (const entry of list) {
+    const forms = [entry[0], ...(entry[3] ?? [])];
+    const keys = forms.map((f) => compact(normalize(f)));
+    const existing = keys.map((k) => owner.get(k)).find(Boolean);
+    const target = existing ?? ([entry[0], entry[1], entry[2], []] as A);
+    if (!existing) out.push(target);
+    forms.forEach((f, i) => {
+      if (!keys[i] || owner.has(keys[i])) return;
+      owner.set(keys[i], target);
+      if (f !== target[0]) target[3]!.push(f);
+    });
+  }
+  return out;
 }

@@ -110,3 +110,30 @@ export function saveLocalPurchase(p: LocalPurchase): LocalPurchase[] {
   safeSet(PURCHASES, JSON.stringify(list));
   return list;
 }
+
+// Gast-Profil: Name und Avatar nur auf diesem Gerät (keine personenbezogenen Daten)
+const GUEST = "rarum.v1.guest";
+
+export interface GuestProfile {
+  name: string;
+  avatar: string;
+}
+
+export function loadGuestProfile(): GuestProfile | null {
+  try {
+    const raw = localStorage.getItem(GUEST);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as Partial<GuestProfile>;
+    return typeof p.name === "string" && typeof p.avatar === "string" ? { name: p.name, avatar: p.avatar } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveGuestProfile(p: GuestProfile) {
+  try {
+    localStorage.setItem(GUEST, JSON.stringify(p));
+  } catch {
+    /* privater Modus – dann eben nur für diese Sitzung */
+  }
+}

@@ -7,7 +7,7 @@ import { PackArt } from "./pack-art";
 import { useApp } from "./providers";
 
 /** Bildkarte eines Themen-Packs mit Zoom, Lichtreflex und animiertem Text */
-export function PackCard({ pack, className, compact = false }: { pack: ThemePack; className?: string; compact?: boolean }) {
+export function PackCard({ pack, className, compact = false, tile = false }: { pack: ThemePack; className?: string; compact?: boolean; tile?: boolean }) {
   const { overview, hasOfficial, stats } = useApp();
   const today = overview?.packs.find((p) => p.packId === pack.id);
   const played = hasOfficial(today?.set?.id);
@@ -18,7 +18,7 @@ export function PackCard({ pack, className, compact = false }: { pack: ThemePack
       style={{ ["--pack" as string]: pack.accent }}
       className={cn(
         "group relative isolate flex overflow-hidden rounded-[22px] border border-white/12 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.9)] transition-all duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_28px_60px_-20px_rgba(0,0,0,0.95)]",
-        compact ? "aspect-[4/5] sm:aspect-[3/4]" : "aspect-[16/11]",
+        tile ? "aspect-[5/4]" : compact ? "aspect-[4/5] sm:aspect-[3/4]" : "aspect-[16/11]",
         className,
       )}
     >
@@ -44,9 +44,7 @@ export function PackCard({ pack, className, compact = false }: { pack: ThemePack
       </div>
 
       <div className="mt-auto w-full p-4 transition-transform duration-500 group-hover:-translate-y-1 sm:p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/70">{pack.short}</p>
         <h3 className={cn("font-display text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]", compact ? "text-[26px] sm:text-3xl" : "text-4xl")}>{pack.name}</h3>
-        {!compact && <p className="mt-1 line-clamp-2 text-sm text-white/80">{pack.tagline}</p>}
         <div className="mt-2 flex items-center justify-between text-[11px] text-white/65">
           <span>{ps && ps.challenges > 0 ? `${ps.challenges}× · Ø ${ps.average}` : "Neu für dich"}</span>
           <ArrowUpRight className="size-4 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" />

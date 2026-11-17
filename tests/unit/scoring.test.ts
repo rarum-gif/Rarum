@@ -109,3 +109,40 @@ describe("Wirtschaft", () => {
     expect((any.wrongAnswers ?? []).some((w) => w.explanation.includes("beginnt nicht"))).toBe(true);
   });
 });
+
+describe("Runde 4: spezifische Fragen, Avatare", () => {
+  const qs = seedContent().questions;
+  const byId = (id: string) => qs.find((x) => x.id === id)!;
+  it("behält redaktionelle Stufen vor #auto und führt Dubletten zusammen", () => {
+    const queen = byId("musik-queen-song");
+    expect(queen.answers.find((a) => a.text === "Bohemian Rhapsody")!.tier).toBe("known");
+    expect(queen.answers.find((a) => a.text === "Machines")!.tier).not.toBe("known");
+    const texts = queen.answers.map((a) => a.text.toLowerCase());
+    expect(new Set(texts).size).toBe(texts.length);
+  });
+  it("wertet richtige, vertippte und falsche Antworten korrekt", () => {
+    const nolan = byId("filme-serien-nolan-film");
+    expect(evaluateAnswer(s, nolan, "Interstelar", { elapsedMs: 1000 }).status).toBe("accepted");
+    expect(evaluateAnswer(s, nolan, "Titanic", { elapsedMs: 1000 }).points).toBe(0);
+    const mcu = byId("filme-serien-mcu-film");
+    expect(evaluateAnswer(s, mcu, "Deadpool", { elapsedMs: 1000 }).status).toBe("known_wrong");
+    expect(evaluateAnswer(s, mcu, "Deadpool & Wolverine", { elapsedMs: 1000 }).status).toBe("accepted");
+    const bb = byId("filme-serien-breaking-bad-figur");
+    expect(evaluateAnswer(s, bb, "Heisenberg", { elapsedMs: 1000 }).answerText).toBe("Walter White");
+    expect(evaluateAnswer(s, bb, "Kim Wexler", { elapsedMs: 1000 }).status).toBe("known_wrong");
+  });
+  it("zählt Allerweltswörter nicht als Kurznamen", () => {
+    const simpsons = byId("filme-serien-simpsons-figur");
+    expect(evaluateAnswer(s, simpsons, "man", { elapsedMs: 1000 }).points).toBe(0);
+    expect(evaluateAnswer(s, simpsons, "Homer", { elapsedMs: 1000 }).status).toBe("accepted");
+  });
+  it("prüft zusammengesetzte und alte Avatare", async () => {
+    const { isValidAvatar, parseAvatar } = await import("@/lib/avatars");
+    expect(isValidAvatar("crown.sunset")).toBe(true);
+    expect(isValidAvatar("fern")).toBe(true);
+    expect(isValidAvatar("crown.pink-elephant")).toBe(false);
+    expect(isValidAvatar("<script>")).toBe(false);
+    expect(parseAvatar("rocket.ocean")).toMatchObject({ icon: "rocket", color: "ocean" });
+    expect(parseAvatar("fern").icon).toBe("leaf");
+  });
+});

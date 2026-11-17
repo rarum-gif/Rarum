@@ -121,3 +121,15 @@ test("Shop: Geld verdienen und etwas kaufen", async ({ page, request }) => {
   await page.getByRole("article").filter({ hasText: "Gitarrenkoffer" }).getByRole("button", { name: "Kaufen" }).click();
   await expect(page.getByText("Gitarrenkoffer gehört jetzt dir!")).toBeVisible();
 });
+
+test("Profil anpassen: Name, Symbol und Farbe (ohne Konto)", async ({ page }) => {
+  await page.goto("/profil");
+  await page.getByRole("button", { name: "Profil anpassen" }).click();
+  await page.getByLabel("Name").fill("Inselkoenig");
+  await page.getByRole("button", { name: "Rakete" }).click();
+  await page.getByRole("button", { name: "Ozean" }).click();
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByRole("heading", { name: "Inselkoenig" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Inselkoenig" })).toBeVisible();
+});

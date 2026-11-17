@@ -1,9 +1,9 @@
 "use client";
 import * as React from "react";
-import { Bird, Clock3, Compass, Feather, HardDrive, Leaf, Moon, Mountain, Shell, Snowflake, Sprout, Sun, TreePine, Waves } from "lucide-react";
+import { Anchor, Bird, Car, Cat, Clock3, Crown, Dices, Dog, Fish, Flame, Gamepad2, Gem, Ghost, Glasses, HardDrive, Headphones, Heart, Leaf, Moon, Mountain, Music, Palmtree, Rabbit, Rocket, Shield, Skull, Smile, Sprout, Star, Sun, Sword, Waves, Zap } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import type { TierId } from "@/lib/types";
-import { AVATARS } from "@/lib/avatars";
+import { parseAvatar } from "@/lib/avatars";
 import { cn, fmt } from "@/lib/utils";
 import { useApp } from "./providers";
 
@@ -27,14 +27,22 @@ export function Logo({ className, withText = true }: { className?: string; withT
   );
 }
 
-const AVATAR_ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = { Leaf, Mountain, Waves, Bird, TreePine, Sun, Moon, Feather, Compass, Sprout, Shell, Snowflake };
+const AVATAR_ICON: Record<string, React.ComponentType<{ style?: React.CSSProperties; strokeWidth?: number }>> = {
+  crown: Crown, flame: Flame, zap: Zap, star: Star, gem: Gem, rocket: Rocket, ghost: Ghost, skull: Skull, cat: Cat, dog: Dog, rabbit: Rabbit, bird: Bird, fish: Fish,
+  palm: Palmtree, sun: Sun, moon: Moon, waves: Waves, mountain: Mountain, leaf: Leaf, music: Music, gamepad: Gamepad2, car: Car, anchor: Anchor, dice: Dices,
+  sword: Sword, shield: Shield, heart: Heart, smile: Smile, glasses: Glasses, headphones: Headphones,
+};
+
+export function AvatarIcon({ icon, size }: { icon: string; size: number }) {
+  const Icon = AVATAR_ICON[icon] ?? Crown;
+  return <Icon style={{ width: size, height: size }} strokeWidth={2.2} />;
+}
 
 export function AvatarBubble({ id, size = 36, className }: { id?: string | null; size?: number; className?: string }) {
-  const a = AVATARS.find((x) => x.id === id) ?? AVATARS[0];
-  const Icon = AVATAR_ICONS[a.icon] ?? Leaf;
+  const a = parseAvatar(id);
   return (
     <span className={cn("inline-flex shrink-0 items-center justify-center rounded-full text-white ring-2 ring-surface", className)} style={{ width: size, height: size, background: `linear-gradient(140deg, ${a.from}, ${a.to})` }} aria-hidden>
-      <Icon style={{ width: size * 0.5, height: size * 0.5 }} />
+      <AvatarIcon icon={a.icon} size={size * 0.5} />
     </span>
   );
 }

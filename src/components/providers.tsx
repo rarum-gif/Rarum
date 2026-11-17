@@ -4,7 +4,8 @@ import type { AttemptRecord, GameSettings, ThemePack } from "@/lib/types";
 import { computeStats, type UserStats } from "@/lib/game/stats";
 import { canBuy, computeEconomy, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
-import { loadLocalAttempts, loadLocalPurchases, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
+import { loadGuestProfile, loadLocalAttempts, loadLocalPurchases, saveGuestProfile, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
+import { DEFAULT_AVATAR, isValidAvatar } from "@/lib/avatars";
 
 export interface SetSummary {
   id: string;
@@ -58,6 +59,9 @@ interface AppState {
   reloadAttempts: () => Promise<void>;
   recordAttempt: (a: AttemptRecord, storage: "local" | "account") => void;
   packById: (id: string | null | undefined) => ThemePack | undefined;
+  /** Angezeigter Name und Avatar – vom Konto oder (Gast) von diesem Gerät */
+  profile: { name: string; avatar: string; guest: boolean };
+  saveProfile: (p: { name: string; avatar: string }) => Promise<string | null>;
   hasOfficial: (setId: string | null | undefined) => AttemptRecord | undefined;
 }
 
@@ -77,6 +81,8 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const [overview, setOverview] = React.useState<Overview | null>(initialOverview);
   const [serverOffset, setServerOffset] = React.useState(0);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
+  const [guest, setGuest] = React.useState<{ name: string; avatar: string } | null>(null);
+  React.useEffect(() => setGuest(loadGuestProfile()), []);
 
   const refreshOverview = React.useCallback(async () => {
     try {
@@ -171,9 +177,31 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const packById = React.useCallback((id: string | null | undefined) => packs.find((p) => p.id === id), [packs]);
   const hasOfficial = React.useCallback((setId: string | null | undefined) => (setId ? attempts.find((a) => a.official && a.setId === setId) : undefined), [attempts]);
 
+  const profile = React.useMemo(
+    () => (user ? { name: user.username, avatar: user.avatar, guest: false } : { name: guest?.name || "Gast", avatar: guest?.avatar || DEFAULT_AVATAR, guest: true }),
+    [user, guest],
+  );
+  const saveProfile = React.useCallback(async ({ name, avatar }: { name: string; avatar: string }) => {
+    const n = name.trim();
+    if (!/^[A-Za-z0-9_.-]{3,24}$/.test(n)) return "Name: 3–24 Zeichen, nur Buchstaben, Ziffern, Punkt, Strich und Unterstrich.";
+    if (!isValidAvatar(avatar)) return "Unbekannter Avatar.";
+    if (user) {
+      try {
+        await api("/api/me/profile", { method: "PATCH", json: { username: n, avatar } });
+        await refreshSession();
+        return null;
+      } catch (e) {
+        return e instanceof Error ? e.message : "Profil konnte nicht gespeichert werden.";
+      }
+    }
+    saveGuestProfile({ name: n, avatar });
+    setGuest({ name: n, avatar });
+    return null;
+  }, [user, refreshSession]);
+
   const value: AppState = {
     packs, settings, accountsEnabled, user, sessionLoaded, attempts, attemptsLoaded, storage: user ? "account" : "local",
-    overview, today, serverOffset, stats, level, economy, purchases, wallet, buy, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial,
+    overview, today, serverOffset, stats, level, economy, purchases, wallet, buy, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial, profile, saveProfile,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

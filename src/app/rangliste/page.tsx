@@ -211,9 +211,9 @@ export default function LeaderboardPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Rangliste" title="Rangliste">
+      <PageHeader title="Rangliste">
         <Link href="/ranked" className="btn-sunset mt-5 flex max-w-md items-center justify-between rounded-2xl px-5 py-4 transition-transform hover:-translate-y-0.5">
-          <span><span className="font-display block text-3xl leading-none tracking-wide">Ranked-Liga</span><span className="text-xs text-white/85">Wochensaison mit Ligen von Bronze bis Champion</span></span>
+          <span className="font-display block text-3xl leading-none tracking-wide">Ranked-Liga</span>
           <Crown className="size-7" />
         </Link>
       </PageHeader>

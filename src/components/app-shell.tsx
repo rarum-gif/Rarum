@@ -15,27 +15,27 @@ export const MENU = [
   {
     title: "Spielen",
     items: [
-      { href: "/play?mode=daily", match: "/daily", label: "Daily Challenge", hint: "7 Fragen · einmal am Tag", icon: CalendarDays },
-      { href: "/ranked", label: "Ranked", hint: "Wochenliga gegen alle", icon: Swords, badge: "Neu" },
-      { href: "/unlimited", label: "Unlimited", hint: "Endlos weiterspielen", icon: InfinityIcon },
-      { href: "/archiv", label: "Archiv", hint: "Verpasste Tage nachholen", icon: Archive },
-      { href: "/packs", label: "Themen-Packs", hint: "15 Welten · eigene Tages-Sets", icon: LayoutGrid },
+      { href: "/play?mode=daily", match: "/daily", label: "Daily Challenge", icon: CalendarDays },
+      { href: "/ranked", label: "Ranked", icon: Swords, badge: "Neu" },
+      { href: "/unlimited", label: "Unlimited", icon: InfinityIcon },
+      { href: "/archiv", label: "Archiv", icon: Archive },
+      { href: "/packs", label: "Themen-Packs", icon: LayoutGrid },
     ],
   },
   {
     title: "Du",
     items: [
-      { href: "/shop", label: "Shop", hint: "Kauf dir dein Imperium", icon: ShoppingBag },
-      { href: "/profil", label: "Mein NNAXOS", hint: "Level, Besitz, Abzeichen", icon: User },
-      { href: "/rangliste", label: "Rangliste", hint: "Tag · Woche · Allzeit", icon: Trophy },
-      { href: "/profil#freunde", match: "/__friends", label: "Freunde", hint: "Einladen & vergleichen", icon: Users },
+      { href: "/shop", label: "Shop", icon: ShoppingBag },
+      { href: "/profil", label: "Mein NNAXOS", icon: User },
+      { href: "/rangliste", label: "Rangliste", icon: Trophy },
+      { href: "/profil#freunde", match: "/__friends", label: "Freunde", icon: Users },
     ],
   },
   {
     title: "Mehr",
     items: [
-      { href: "/info", label: "So funktioniert's", hint: "Regeln, Punkte, FAQ", icon: Info },
-      { href: "/admin", label: "Redaktion", hint: "Fragen & Sets verwalten", icon: Settings2 },
+      { href: "/info", label: "So funktioniert's", icon: Info },
+      { href: "/admin", label: "Redaktion", icon: Settings2 },
     ],
   },
 ] as const;
@@ -58,7 +58,7 @@ function WealthPill() {
 
 function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const path = usePathname() ?? "/";
-  const { user, accountsEnabled } = useApp();
+  const { user, accountsEnabled, profile } = useApp();
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -110,8 +110,7 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
                                 {it.label}
                                 {"badge" in it && it.badge && <span className="bg-sunset rounded px-1.5 py-0.5 font-sans text-[9px] font-black uppercase tracking-[0.15em] text-white">{it.badge}</span>}
                               </span>
-                              <span className="mt-1 block truncate text-xs text-white/55">{it.hint}</span>
-                            </span>
+                                                          </span>
                           </Link>
                         </motion.li>
                       );
@@ -121,19 +120,14 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
               ))}
             </nav>
             <div className="border-t border-white/10 p-5">
-              {user ? (
+              {user || !accountsEnabled ? (
                 <Link href="/profil" onClick={onClose} className="flex items-center gap-3">
-                  <AvatarBubble id={user.avatar} size={40} />
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold">{user.username}</span>
-                    <span className="text-xs text-white/55">Angemeldet · Fortschritt im Konto</span>
-                  </span>
+                  <AvatarBubble id={profile.avatar} size={40} />
+                  <span className="block min-w-0 truncate font-semibold">{profile.name}</span>
                 </Link>
               ) : accountsEnabled ? (
                 <Link href="/login" onClick={onClose} className="btn-sunset block rounded-xl px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em]">Spielerkonto erstellen</Link>
-              ) : (
-                <p className="text-xs leading-relaxed text-white/50">Demo-Modus: Dein Fortschritt wird auf diesem Gerät gespeichert. Komplett kostenlos, ohne Werbung.</p>
-              )}
+              ) : null}
             </div>
           </motion.aside>
         </>
@@ -142,9 +136,83 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+/** Festes Seitenmenü auf breiten Bildschirmen */
+function Sidebar() {
+  const path = usePathname() ?? "/";
+  const { user, accountsEnabled, profile, wallet, economy, attemptsLoaded } = useApp();
+  return (
+    <aside className="sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--side-w)] flex-col border-r border-white/[0.07] lg:flex">
+      <Link href="/" className="flex h-16 shrink-0 items-center px-5" aria-label="NNAXOS – Hauptmenü">
+        <Logo />
+      </Link>
+      <nav className="scrollbar-none flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-3">
+        {MENU.map((group) => (
+          <div key={group.title}>
+            <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.3em] text-white/35">{group.title}</p>
+            <ul className="space-y-0.5">
+              {group.items.map((it) => {
+                const active = isActive(path, it.href, "match" in it ? it.match : undefined);
+                return (
+                  <li key={it.href}>
+                    <Link href={it.href} className={cn("side-item group", active && "side-item-active")}>
+                      <it.icon className="size-[18px] shrink-0" />
+                      <span className="flex-1 truncate">{it.label}</span>
+                      {"badge" in it && it.badge && <span className="bg-sunset rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-white">{it.badge}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div className="border-t border-white/[0.07] p-3">
+        <Link href="/profil" className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/[0.06]">
+          <AvatarBubble id={profile.avatar} size={40} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-white">{profile.name}</span>
+            <span className="font-num block text-xs text-white/55">Lvl {economy.level.level} · {attemptsLoaded ? formatCash(wallet.balance) : "–"}</span>
+          </span>
+        </Link>
+        {!user && accountsEnabled && (
+          <Link href="/login" className="btn-sunset mt-2 block rounded-xl px-3 py-2.5 text-center text-xs font-bold uppercase tracking-[0.16em]">Spielerkonto erstellen</Link>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+/** Schnellnavigation unter dem Header (Handy und Tablet) */
+const QUICK = [
+  { href: "/daily", label: "Daily" },
+  { href: "/ranked", label: "Ranked" },
+  { href: "/packs", label: "Packs" },
+  { href: "/unlimited", label: "Unlimited" },
+  { href: "/archiv", label: "Archiv" },
+  { href: "/shop", label: "Shop" },
+  { href: "/rangliste", label: "Rangliste" },
+  { href: "/profil", label: "Profil" },
+];
+
+function SubNav() {
+  const path = usePathname() ?? "/";
+  return (
+    <nav className="scrollbar-none -mb-px flex gap-1 overflow-x-auto px-4 pb-2 sm:px-6 lg:hidden" aria-label="Bereiche">
+      {QUICK.map((q) => {
+        const active = isActive(path, q.href);
+        return (
+          <Link key={q.href} href={q.href} className={cn("shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.14em] transition-colors", active ? "bg-white text-[#140d24]" : "text-white/65 hover:bg-white/10 hover:text-white")}>
+            {q.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname() ?? "/";
-  const { user } = useApp();
+  const { profile } = useApp();
   const [open, setOpen] = React.useState(false);
   const playing = path.startsWith("/play");
   const home = path === "/";
@@ -154,40 +222,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SceneProvider>
-      <div className="relative isolate min-h-dvh">
+      <div className="shell relative isolate min-h-dvh" data-side={playing ? "0" : "1"}>
         <SceneBackground />
         <div className="grain pointer-events-none fixed -inset-[10%] z-[1]" aria-hidden />
-        <header className={cn("top-0 z-30", home ? "absolute inset-x-0" : "sticky border-b border-white/[0.07] bg-[rgba(10,7,18,0.5)] backdrop-blur-xl")}>
-          <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-            <button onClick={() => setOpen(true)} className="icon-btn" aria-label="Menü öffnen" aria-expanded={open}>
-              <Menu className="size-5" />
-            </button>
-            {!home && (
-              <Link href="/" className="shrink-0" aria-label="NNAXOS – Hauptmenü">
-                <Logo />
-              </Link>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              {!playing && <WealthPill />}
-              <Link href="/ranked" className="icon-btn hidden sm:grid" aria-label="Ranked" title="Ranked"><Crown className="size-5" /></Link>
-              <Link href="/profil" className="rounded-full" aria-label="Profil">
-                <AvatarBubble id={user?.avatar} size={38} />
-              </Link>
+        {!playing && <Sidebar />}
+        <div className="side-offset">
+          <header className={cn("top-0 z-30", home ? "absolute inset-x-0 side-offset" : "sticky border-b border-white/[0.07] bg-[rgba(10,7,18,0.55)] backdrop-blur-xl")}>
+            <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+              <span className={cn(!playing && "lg:hidden")}>
+                <button onClick={() => setOpen(true)} className="icon-btn" aria-label="Menü öffnen" aria-expanded={open}>
+                  <Menu className="size-5" />
+                </button>
+              </span>
+              {!home && (
+                <Link href="/" className={cn("shrink-0", !playing && "lg:hidden")} aria-label="NNAXOS – Hauptmenü">
+                  <Logo />
+                </Link>
+              )}
+              <div className="ml-auto flex items-center gap-2">
+                {!playing && <WealthPill />}
+                <span className="hidden sm:block lg:hidden"><Link href="/ranked" className="icon-btn" aria-label="Ranked" title="Ranked"><Crown className="size-5" /></Link></span>
+                <Link href="/profil" className="rounded-full" aria-label="Profil">
+                  <AvatarBubble id={profile.avatar} size={38} />
+                </Link>
+              </div>
             </div>
-          </div>
-        </header>
+            {!home && !playing && <SubNav />}
+          </header>
 
-        <main className={cn("relative z-[2] mx-auto max-w-6xl px-4 sm:px-6", home ? "pb-16" : playing ? "pb-10 pt-4" : "pb-20 pt-6 sm:pt-10")}>{children}</main>
+          <main className={cn("relative z-[2] mx-auto max-w-7xl px-4 sm:px-6", home ? "pb-16" : playing ? "pb-10 pt-4" : "pb-20 pt-6 sm:pt-10")}>{children}</main>
 
-        {!playing && !home && (
-          <footer className="relative z-[2] mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 pb-10 text-xs text-white/40">
-            <span>NNAXOS – je seltener die Antwort, desto reicher du.</span>
-            <span className="flex gap-4">
+          {!playing && !home && (
+            <footer className="relative z-[2] mx-auto flex max-w-7xl flex-wrap items-center justify-end gap-4 px-6 pb-10 text-xs text-white/40">
               <Link href="/info" className="hover:text-white">So funktioniert&apos;s</Link>
               <Link href="/info#bilder" className="hover:text-white">Bildnachweise</Link>
-            </span>
-          </footer>
-        )}
+            </footer>
+          )}
+        </div>
         <Drawer open={open} onClose={close} />
       </div>
     </SceneProvider>

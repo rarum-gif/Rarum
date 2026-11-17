@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { AvatarBubble, StatTile, TierBadge } from "@/components/bits";
+import { AvatarBubble, AvatarIcon, StatTile, TierBadge } from "@/components/bits";
 import { AchievementMedal } from "@/components/achievement-medal";
 import { ACHIEVEMENTS, earnedAchievements } from "@/lib/game/stats";
-import { AVATARS } from "@/lib/avatars";
+import { AVATAR_COLORS, AVATAR_ICONS, avatarId, parseAvatar } from "@/lib/avatars";
 import { api, ApiError } from "@/lib/client/api";
 import { clearLocalAttempts, loadLocalAttempts, replaceLocalAttempts } from "@/lib/client/local";
 import { browserSupabase } from "@/lib/client/supabase";
@@ -64,42 +64,66 @@ function SyncCard() {
 }
 
 function EditProfile({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { user, refreshSession } = useApp();
-  const [username, setUsername] = React.useState(user?.username ?? "");
-  const [avatar, setAvatar] = React.useState(user?.avatar ?? "fern");
+  const { profile, saveProfile } = useApp();
+  const [name, setName] = React.useState(profile.name);
+  const [icon, setIcon] = React.useState(parseAvatar(profile.avatar).icon);
+  const [color, setColor] = React.useState(parseAvatar(profile.avatar).color ?? AVATAR_COLORS[0].id);
   const [err, setErr] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   React.useEffect(() => {
-    setUsername(user?.username ?? "");
-    setAvatar(user?.avatar ?? "fern");
-  }, [user, open]);
+    if (!open) return;
+    const a = parseAvatar(profile.avatar);
+    setName(profile.guest && profile.name === "Gast" ? "" : profile.name);
+    setIcon(a.icon);
+    setColor(a.color ?? AVATAR_COLORS[0].id);
+    setErr(null);
+  }, [open, profile]);
+  const id = avatarId(icon, color);
   const save = async () => {
     setBusy(true);
-    setErr(null);
-    try {
-      await api("/api/me/profile", { method: "PATCH", json: { username, avatar } });
-      await refreshSession();
-      onOpenChange(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Fehler");
-    } finally {
-      setBusy(false);
-    }
+    const e = await saveProfile({ name, avatar: id });
+    setBusy(false);
+    if (e) setErr(e);
+    else onOpenChange(false);
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title="Profil bearbeiten" description="Benutzername und Avatar sind in Ranglisten sichtbar.">
-        <Label htmlFor="un">Benutzername</Label>
-        <Input id="un" value={username} onChange={(e) => setUsername(e.target.value)} maxLength={24} />
-        <p className="mb-2 mt-5 text-sm font-medium text-fg-muted">Avatar</p>
-        <div className="grid grid-cols-6 gap-2">
-          {AVATARS.map((a) => (
-            <button key={a.id} onClick={() => setAvatar(a.id)} className={cn("rounded-full p-1 transition", avatar === a.id ? "ring-2 ring-accent" : "opacity-80 hover:opacity-100")} aria-label={a.label} aria-pressed={avatar === a.id}>
-              <AvatarBubble id={a.id} size={44} />
+      <DialogContent title="Profil anpassen" className="sm:max-w-xl">
+        <div className="flex items-center gap-4">
+          <div className="bg-sunset glow-sunset rounded-full p-1"><AvatarBubble id={id} size={76} className="ring-0" /></div>
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="un">Name</Label>
+            <Input id="un" value={name} placeholder="Dein Spielername" onChange={(e) => setName(e.target.value)} maxLength={24} autoComplete="off" />
+          </div>
+        </div>
+        <p className="mb-2 mt-6 text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">Symbol</p>
+        <div className="grid grid-cols-6 gap-2 sm:grid-cols-10">
+          {AVATAR_ICONS.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => setIcon(a.id)}
+              aria-label={a.label}
+              aria-pressed={icon === a.id}
+              className={cn("grid aspect-square place-items-center rounded-xl border text-white transition", icon === a.id ? "border-white/70 bg-white/15" : "border-white/10 bg-white/[0.04] text-white/70 hover:border-white/30 hover:text-white")}
+            >
+              <AvatarIcon icon={a.id} size={20} />
             </button>
           ))}
         </div>
-        {err && <p className="mt-3 text-sm text-danger">{err}</p>}
+        <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">Farbe</p>
+        <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
+          {AVATAR_COLORS.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setColor(c.id)}
+              aria-label={c.label}
+              aria-pressed={color === c.id}
+              className={cn("aspect-square rounded-full transition", color === c.id ? "ring-2 ring-white ring-offset-2 ring-offset-[#120e20]" : "opacity-80 hover:opacity-100")}
+              style={{ background: `linear-gradient(140deg, ${c.from}, ${c.to})` }}
+            />
+          ))}
+        </div>
+        {err && <p className="mt-4 text-sm text-danger">{err}</p>}
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Abbrechen</Button>
           <Button onClick={save} disabled={busy}>{busy && <Loader2 className="animate-spin" />}Speichern</Button>
@@ -110,7 +134,7 @@ function EditProfile({ open, onOpenChange }: { open: boolean; onOpenChange: (v: 
 }
 
 function ProfileInner() {
-  const { user, accountsEnabled, stats, level, economy, wallet, purchases, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession } = useApp();
+  const { user, profile, accountsEnabled, stats, level, economy, wallet, purchases, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession } = useApp();
   const [edit, setEdit] = React.useState(false);
   const earned = earnedAchievements(stats, attempts);
   const records = [
@@ -145,10 +169,10 @@ function ProfileInner() {
         <img src="/images/profile/header.webp" alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(12,8,20,0.97)] via-[rgba(12,8,20,0.55)] to-[rgba(12,8,20,0.15)]" />
         <div className="flex flex-col gap-6 p-6 pt-32 sm:flex-row sm:items-end sm:p-10 sm:pt-44">
-        <div className="rounded-full p-1 bg-sunset glow-sunset"><AvatarBubble id={user?.avatar} size={96} className="ring-0" /></div>
+        <div className="rounded-full p-1 bg-sunset glow-sunset"><AvatarBubble id={profile.avatar} size={96} className="ring-0" /></div>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-6xl text-white sm:text-7xl">{user?.username ?? "Gast"}</h1>
+            <h1 className="font-display text-6xl text-white sm:text-7xl">{profile.name}</h1>
             <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Level {level.current.level} · {level.current.name}</span>
           </div>
           <div className="mt-3 max-w-md">
@@ -171,13 +195,11 @@ function ProfileInner() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setEdit(true)}><Pencil />Profil anpassen</Button>
           {user ? (
-            <>
-              <Button variant="secondary" size="sm" onClick={() => setEdit(true)}><Pencil />Bearbeiten</Button>
-              <Button variant="ghost" size="sm" onClick={signOut}><LogOut />Abmelden</Button>
-            </>
+            <Button variant="ghost" size="sm" onClick={signOut}><LogOut />Abmelden</Button>
           ) : accountsEnabled ? (
-            <Button asChild><Link href="/login">Kostenloses Konto erstellen</Link></Button>
+            <Button asChild size="sm"><Link href="/login">Spielerkonto erstellen</Link></Button>
           ) : null}
         </div>
         </div>

@@ -3,7 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleSlash, Clock, Flag, Hourglass, Info, Loader2, LogOut, Repeat2, Send, Sparkles, XCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, CircleSlash, Flag, Hourglass, Info, Loader2, LogOut, Repeat2, Send, XCircle } from "lucide-react";
 import type { AnswerResult, AttemptRecord, PlayMode, PublicQuestion } from "@/lib/types";
 import { api, ApiError } from "@/lib/client/api";
 import { clearRun, loadRun, runKey, saveRun } from "@/lib/client/local";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/input";
 import { useApp } from "@/components/providers";
 import { PackArt } from "@/components/pack-art";
-import { AnimatedNumber, DifficultyDots, RarityMeter, TierBadge, tierVar, useTierLabel } from "@/components/bits";
+import { AnimatedNumber, RarityMeter, TierBadge, tierVar, useTierLabel } from "@/components/bits";
 import { RunSummary } from "@/components/run-summary";
 import { SceneOverride } from "@/components/scene";
 import { CashPop, RunCashBadge } from "@/components/wealth-hud";
@@ -419,8 +419,7 @@ function QuestionView({ payload, offset, input, setInput, submitting, onSubmit, 
       <div className="mb-6 flex items-center justify-between">
         <span className="hud inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
           <span className="size-2 rounded-full" style={{ background: packAccent }} />
-          {packName} · {payload.question.topic}
-          <DifficultyDots value={payload.question.difficulty} className="ml-1 text-fg-subtle" />
+          {packName}
         </span>
         <div className={cn("relative size-[72px] rounded-full", urgent && "animate-[pulse-soft_1s_ease-in-out_infinite]")} role="timer" aria-live="off" aria-label={`${secs} Sekunden übrig`}>
           <svg viewBox="0 0 64 64" className="size-[72px] -rotate-90 drop-shadow-[0_0_12px_rgba(255,106,85,0.45)]">

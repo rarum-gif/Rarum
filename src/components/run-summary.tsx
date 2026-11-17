@@ -2,7 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Award, Check, Crown, Home, RotateCcw, Share2, Sparkles, TrendingUp } from "lucide-react";
+import { Award, Check, Crown, Home, RotateCcw, Share2, TrendingUp } from "lucide-react";
 import type { AttemptRecord, TierId } from "@/lib/types";
 import { ACHIEVEMENTS, computeStats, earnedAchievements } from "@/lib/game/stats";
 import { formatDateDe } from "@/lib/time";
@@ -218,9 +218,6 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
         </Card>
       )}
 
-      <p className="flex items-center justify-center gap-1.5 text-center text-xs text-fg-subtle">
-        <Sparkles className="size-3.5" /> Seltenheitsstufen sind redaktionell eingestuft – keine weltweit gemessenen Häufigkeiten.
-      </p>
     </div>
   );
 }

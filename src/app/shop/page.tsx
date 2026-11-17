@@ -2,7 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, Lock, ShoppingBag, Sparkles } from "lucide-react";
+import { Check, Lock, Sparkles } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { PageHeader } from "@/components/bits";
 import { SceneOverride } from "@/components/scene";
@@ -28,7 +28,7 @@ export default function ShopPage() {
   return (
     <div>
       <SceneOverride scene="marina" />
-      <PageHeader eyebrow="Shop" title="Kauf dir dein Imperium" />
+      <PageHeader title="Shop" />
 
       <section className="glass mb-8 grid gap-4 rounded-[28px] p-5 sm:grid-cols-3 sm:p-6">
         <div>
@@ -45,7 +45,6 @@ export default function ShopPage() {
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/55">Pro richtige Antwort</p>
           <p className="font-num text-2xl font-semibold text-white">{formatCash(Math.round(TIER_CASH.known * cashMultiplier(lvl.level)))} – {formatCash(Math.round(TIER_CASH.legendary * cashMultiplier(lvl.level)))}</p>
-          <p className="text-xs text-white/55">×{cashMultiplier(lvl.level).toFixed(1)} durch dein Level</p>
         </div>
       </section>
 
@@ -68,7 +67,6 @@ export default function ShopPage() {
               </div>
               <div className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-white/70">{item.line}</p>
                   <p className="font-num text-xl font-semibold text-white">{formatCash(item.price, { compact: false })}</p>
                 </div>
                 {has ? (
@@ -85,9 +83,6 @@ export default function ShopPage() {
         })}
       </div>
 
-      <p className="mt-8 text-center text-sm text-white/60">
-        <ShoppingBag className="mr-1 inline size-4" />Geld verdienst du mit jeder richtigen Antwort. <Link href="/play?mode=daily" className="font-semibold text-[var(--peach)] hover:text-white">Jetzt spielen ›</Link>
-      </p>
 
       <AnimatePresence>
         {toast && (

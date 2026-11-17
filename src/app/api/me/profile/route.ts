@@ -1,6 +1,6 @@
 import { fail, handle, json, readJson } from "@/lib/server/http";
 import { serviceClient, getSessionUser } from "@/lib/server/supabase";
-import { AVATARS } from "@/lib/avatars";
+import { isValidAvatar } from "@/lib/avatars";
 
 export const PATCH = handle(async (req: Request) => {
   const user = await getSessionUser();
@@ -13,7 +13,7 @@ export const PATCH = handle(async (req: Request) => {
     patch.username = u;
   }
   if (body.avatar !== undefined) {
-    if (!AVATARS.some((a) => a.id === body.avatar)) return fail("Unbekannter Avatar.");
+    if (!isValidAvatar(body.avatar)) return fail("Unbekannter Avatar.");
     patch.avatar = body.avatar;
   }
   const { error } = await serviceClient().from("profiles").update(patch).eq("id", user.id);

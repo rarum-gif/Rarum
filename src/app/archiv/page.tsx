@@ -5,7 +5,7 @@ import { Check, Filter, Play, Repeat2 } from "lucide-react";
 import { useApp, type SetSummary } from "@/components/providers";
 import { Card } from "@/components/ui/card";
 import { Select, Input } from "@/components/ui/input";
-import { DifficultyDots, EmptyState, PageHeader } from "@/components/bits";
+import { EmptyState, PageHeader } from "@/components/bits";
 import { api } from "@/lib/client/api";
 import { formatDateDe } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ export default function ArchivePage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Archiv" title="Vergangene Challenges" />
+      <PageHeader title="Archiv" />
 
       <Card className="mb-6 grid gap-3 p-4 sm:grid-cols-4">
         <label className="text-xs font-medium text-fg-subtle">Datum<Input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} className="mt-1 h-10" /></label>
@@ -98,7 +98,7 @@ export default function ArchivePage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-white">{p ? p.name : "Daily Challenge"}</p>
                       <p className="flex items-center gap-2 text-xs text-fg-subtle">
-                        {s.count} Fragen · <DifficultyDots value={s.difficulty} />
+                        {s.count} Fragen
                         {s.repeats > 0 && <span className="inline-flex items-center gap-0.5"><Repeat2 className="size-3" />{s.repeats}</span>}
                       </p>
                     </div>

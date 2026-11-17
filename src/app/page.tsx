@@ -2,11 +2,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { ChevronDown, ChevronUp, Crown, Flame, Gem, Infinity as InfinityIcon, LayoutGrid, Lock, RotateCcw, ShoppingBag, Swords, Trophy } from "lucide-react";
+import { ChevronDown, Crown, Flame, Gem, Infinity as InfinityIcon, LayoutGrid, Lock, RotateCcw, ShoppingBag, Swords, Trophy } from "lucide-react";
 import { useApp } from "@/components/providers";
-import { AnimatedNumber, ResetCountdown } from "@/components/bits";
+import { PackCard } from "@/components/pack-card";
+import { ResetCountdown } from "@/components/bits";
 import { formatCash } from "@/lib/game/wealth";
-import { SHOP, TIER_CASH, cashMultiplier } from "@/lib/game/economy";
+import { SHOP } from "@/lib/game/economy";
 import { divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { daysBetween } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -37,33 +38,6 @@ function Wordmark() {
   );
 }
 
-function HowTo() {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div className="text-left">
-      <button onClick={() => setOpen((o) => !o)} className="group inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-white/70 transition-colors hover:text-white" aria-expanded={open}>
-        {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5 transition-transform group-hover:translate-y-0.5" />}
-        So wirst du reich
-      </button>
-      <motion.div initial={false} animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }} transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }} className="overflow-hidden">
-        <ol className="mt-3 grid gap-2 text-sm text-white/85 sm:grid-cols-3">
-          {[
-            ["01", "Tippe eine eigene Antwort.", "Keine Auswahl – du denkst selbst."],
-            ["02", "Jede richtige Antwort zahlt.", "Ab 50 $ – seltene Antworten bringen mehr."],
-            ["03", "Level aufsteigen, Imperium kaufen.", "Mehr Level = mehr Geld pro Antwort."],
-          ].map(([n, t, d]) => (
-            <li key={n} className="hud rounded-xl px-3 py-2.5">
-              <span className="font-num text-xs text-[var(--peach)]">{n}</span>
-              <p className="font-semibold text-white">{t}</p>
-              <p className="text-xs text-white/60">{d}</p>
-            </li>
-          ))}
-        </ol>
-      </motion.div>
-    </div>
-  );
-}
-
 function RankedCard() {
   const { attempts, today } = useApp();
   const s = season(today);
@@ -71,7 +45,7 @@ function RankedCard() {
   const div = divisionFor(me.rp);
   return (
     <Link href="/ranked" className="group relative block overflow-hidden rounded-2xl border border-white/20 bg-[rgba(10,6,20,0.62)] p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/45">
-      <span className="bg-sunset absolute -top-px left-4 rounded-b-md px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-white">Neu · {s.label}</span>
+      <span className="bg-sunset absolute -top-px left-4 rounded-b-md px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-white">Neu</span>
       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
       <div className="mt-2 flex items-center gap-3">
         <span className="grid size-11 place-items-center rounded-xl border border-white/15" style={{ background: `linear-gradient(140deg, ${div.division.color}55, transparent)` }}>
@@ -79,7 +53,7 @@ function RankedCard() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-[26px] leading-none tracking-wide text-white">Ranked</p>
-          <p className="truncate text-xs text-white/65">{me.matches ? `${div.division.name} · ${me.rp} RP · ${me.matches} Matches` : "Miss dich mit allen – neue Saison jede Woche"}</p>
+          <p className="truncate text-xs text-white/65">{me.matches ? `${div.division.name} · ${me.rp} RP` : s.label}</p>
         </div>
         <span className="font-display text-xl tracking-wide text-[var(--peach)] transition-transform group-hover:translate-x-1">Spielen ›</span>
       </div>
@@ -132,23 +106,16 @@ function Hero() {
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const lift = useTransform(scrollYProgress, [0, 1], [0, -80]);
   return (
-    <section ref={ref} className="relative left-1/2 flex min-h-[100svh] w-screen -translate-x-1/2 flex-col items-center justify-between px-4 pb-6 pt-20 sm:px-6">
+    <section ref={ref} className="bleed flex min-h-[100svh] flex-col items-center justify-between px-4 pb-6 pt-20 sm:px-6">
       <div className="vignette pointer-events-none absolute inset-0" />
       <motion.div style={{ opacity: fade, y: lift }} className="relative mt-[6vh] flex flex-col items-center text-center">
-        <motion.p initial={{ opacity: 0, letterSpacing: "0.8em" }} animate={{ opacity: 1, letterSpacing: "0.42em" }} transition={{ duration: 1.2 }} className="mb-3 text-[11px] font-bold uppercase text-white/85 sm:text-xs">
-          Ready for today&apos;s challenge?
-        </motion.p>
         <Wordmark />
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75, duration: 0.8 }} className="font-display text-sunset mt-2 text-[clamp(22px,4.4vw,40px)] tracking-[0.5em]">
           Vom Strand zur Skyline
         </motion.p>
-        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95 }} className="mt-4 max-w-md text-[15px] text-white/85">
-          Dein tägliches Wissen. Deine Antworten. Deine Punkte.
-        </motion.p>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }} className="relative w-full max-w-[600px] space-y-3">
-        <HowTo />
         <div className="max-w-[360px]"><RankedCard /></div>
         <PlayButton />
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -164,7 +131,6 @@ function Hero() {
         {!attemptsLoaded && <div className="sr-only">Lädt …</div>}
       </motion.div>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="mt-4 flex flex-col items-center text-[10px] font-bold uppercase tracking-[0.3em] text-white/45">
-        Dein Imperium
         <ChevronDown className="mt-1 size-4 animate-bounce" />
       </motion.div>
     </section>
@@ -175,8 +141,8 @@ function ShopTeaser() {
   const { purchases, economy } = useApp();
   const owned = new Set(purchases.map((p) => p.itemId));
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(8,5,16,0.82)] to-[rgba(8,5,16,0.92)] px-4 py-16 sm:px-6">
-      <div className="mx-auto max-w-5xl">
+    <section className="bleed bg-[rgba(8,5,16,0.94)] px-4 pb-20 pt-10 sm:px-6">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--peach)]">Shop</p>
@@ -209,36 +175,73 @@ function ShopTeaser() {
   );
 }
 
-function Empire() {
-  const { stats, attemptsLoaded, attempts, today, wallet, economy } = useApp();
+function Dashboard() {
+  const { stats, attemptsLoaded, attempts, today, wallet, economy, packs, overview, hasOfficial } = useApp();
   const me = rankedFromAttempts(attempts, season(today).start);
   const div = divisionFor(me.rp);
   const lvl = economy.level;
   const tiles = [
     { icon: Gem, label: "Kontostand", value: attemptsLoaded ? formatCash(wallet.balance) : "–", hint: `Vermögen ${formatCash(wallet.netWorth)}` },
-    { icon: Trophy, label: `Level ${lvl.level}`, value: lvl.title, hint: `${lvl.toNext} XP bis Level ${lvl.level + 1} · ${formatCash(Math.round(TIER_CASH.known * cashMultiplier(lvl.level)))}+ pro Antwort` },
+    { icon: Trophy, label: `Level ${lvl.level}`, value: lvl.title, hint: `${lvl.toNext} XP bis Level ${lvl.level + 1}` },
     { icon: Flame, label: "Serie", value: `${stats.streak.current} ${stats.streak.current === 1 ? "Tag" : "Tage"}`, hint: `Rekord: ${stats.streak.longest}` },
-    { icon: Crown, label: "Ranked", value: `${me.rp} RP`, hint: me.matches ? `${div.division.name} · ${me.matches} Matches` : "Noch kein Match diese Saison" },
+    { icon: Crown, label: "Ranked", value: `${me.rp} RP`, hint: me.matches ? div.division.name : season(today).label },
   ];
+  // offene Packs zuerst
+  const ordered = packs
+    .map((p) => ({ p, done: !!hasOfficial(overview?.packs.find((x) => x.packId === p.id)?.set?.id) }))
+    .sort((a, b) => Number(a.done) - Number(b.done) || a.p.order - b.p.order)
+    .slice(0, 6)
+    .map((x) => x.p);
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2 bg-[rgba(8,5,16,0.92)] px-4 pb-16 pt-4 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-display text-5xl text-white">Dein Imperium</h2>
-        <Link href="/profil" className="text-sm font-semibold text-[var(--peach)] hover:text-white">Alles ansehen ›</Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {tiles.map((t, i) => (
-          <motion.div key={t.label} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="hud relative overflow-hidden rounded-2xl px-4 py-4">
-            <span className="bg-sunset absolute left-0 top-4 h-8 w-[3px] rounded-r-full" />
-            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/60"><t.icon className="size-3.5 text-[var(--peach)]" />{t.label}</p>
-            <p className="font-num mt-1 text-2xl font-semibold text-white sm:text-3xl">{t.value}</p>
-            <p className="truncate text-[11px] text-white/55">{t.hint}</p>
-          </motion.div>
-        ))}
-      </div>
+    <section className="bleed bg-gradient-to-b from-transparent via-[rgba(8,5,16,0.86)] to-[rgba(8,5,16,0.94)] px-4 pb-6 pt-14 sm:px-6">
+      <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+        <div>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <h2 className="font-display text-5xl text-white">Themen-Packs</h2>
+            <Link href="/packs" className="text-sm font-semibold text-[var(--peach)] hover:text-white">Alle {packs.length} ›</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {ordered.map((p, i) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                <PackCard pack={p} compact tile className="h-full" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <h2 className="font-display text-5xl text-white">Dein Imperium</h2>
+            <Link href="/profil" className="text-sm font-semibold text-[var(--peach)] hover:text-white">Profil ›</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {tiles.map((t, i) => (
+              <motion.div key={t.label} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="hud relative overflow-hidden rounded-2xl px-4 py-4">
+                <span className="bg-sunset absolute left-0 top-4 h-8 w-[3px] rounded-r-full" />
+                <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/60"><t.icon className="size-3.5 text-[var(--peach)]" />{t.label}</p>
+                <p className="font-num mt-1 truncate text-2xl font-semibold text-white">{t.value}</p>
+                <p className="truncate text-[11px] text-white/55">{t.hint}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <QuickLink href="/unlimited" icon={InfinityIcon} label="Unlimited" />
+            <QuickLink href="/archiv" icon={RotateCcw} label="Archiv" />
+            <QuickLink href="/rangliste" icon={Trophy} label="Rangliste" />
+            <QuickLink href="/shop" icon={ShoppingBag} label="Shop" />
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+function QuickLink({ href, icon: Icon, label }: { href: string; icon: React.ComponentType<{ className?: string }>; label: string }) {
+  return (
+    <Link href={href} className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/[0.08]">
+      <Icon className="size-5 text-[var(--peach)]" />
+      <span className="font-display flex-1 text-2xl leading-none tracking-wide text-white">{label}</span>
+      <span className="text-white/40 transition-transform group-hover:translate-x-1">›</span>
+    </Link>
   );
 }
 
@@ -246,8 +249,8 @@ export default function HomePage() {
   return (
     <div>
       <Hero />
+      <Dashboard />
       <ShopTeaser />
-      <Empire />
     </div>
   );
 }
