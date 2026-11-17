@@ -11,7 +11,7 @@ export function getStore(): ContentStore {
   if (!g.__rarumStore) {
     g.__rarumStore = isSupabaseConfigured()
       ? new SupabaseStore()
-      : new FileStore(process.env.RARUM_DATA_FILE ?? path.join(process.cwd(), "data", "store.json"));
+      : new FileStore(process.env.NNAXOS_DATA_FILE ?? process.env.RARUM_DATA_FILE ?? path.join(process.cwd(), "data", "store.json"));
   }
   return g.__rarumStore;
 }

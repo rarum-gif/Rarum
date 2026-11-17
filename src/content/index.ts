@@ -42,7 +42,7 @@ const drafts: Question[] = defineQuestions("geografie", [
 ]);
 
 /** Bei inhaltlichen Seed-Änderungen erhöhen – bestehende Demo-Stores übernehmen sie dann automatisch. */
-export const CONTENT_REVISION = 2;
+export const CONTENT_REVISION = 3;
 
 export function seedContent(): ContentData {
   const questions = applyExtras([

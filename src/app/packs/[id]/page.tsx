@@ -80,7 +80,7 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-[var(--peach)]" />Training</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm text-fg-muted">Zufällige Fragen aus dem gesamten {pack.short}-Bestand. Beliebig oft spielbar, zählt nicht für die Tageswertung.</p>
+            <p className="text-sm text-fg-muted">Zufällige Fragen, beliebig oft.</p>
             <Button asChild variant="secondary" className="mt-4"><Link href={`/play?mode=training&pack=${pack.id}`}>Training starten</Link></Button>
           </CardContent>
         </Card>

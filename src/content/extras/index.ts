@@ -5,10 +5,16 @@ import { parseExtra } from "./parse";
 import { extrasA } from "./a";
 import { extrasB } from "./b";
 import { extrasC } from "./c";
+import { extrasD } from "./d";
+import { extrasE } from "./e";
+import { extrasF } from "./f";
 
 const TIER = { K: "known", F: "familiar", U: "unusual", R: "rare", V: "very_rare", L: "legendary" } as const;
 
-export const EXTRAS: Record<string, string> = { ...extrasA, ...extrasB, ...extrasC };
+const SOURCES = [extrasA, extrasB, extrasC, extrasD, extrasE, extrasF];
+/** Mehrere Dateien dürfen dieselbe Frage ergänzen – die Blöcke werden aneinandergehängt. */
+export const EXTRAS: Record<string, string> = {};
+for (const src of SOURCES) for (const [k, v] of Object.entries(src)) EXTRAS[k] = EXTRAS[k] ? EXTRAS[k] + "\n#end\n" + v : v;
 
 /**
  * Ergänzt die Seed-Fragen um weitere gültige Antworten.

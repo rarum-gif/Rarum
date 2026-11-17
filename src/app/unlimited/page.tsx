@@ -14,9 +14,7 @@ export default function UnlimitedPage() {
   const answered = runs.reduce((s, a) => s + a.answers.length, 0);
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow="Unlimited" title="Endlos trainieren">
-        Zufällige Fragen aus allen 15 Themenwelten, so lange du willst. Kein Tageslimit, keine Energie, keine Pausen – beende die Runde, wann du möchtest.
-      </PageHeader>
+      <PageHeader eyebrow="Unlimited" title="Endlos trainieren" />
       <section className="glass relative overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
         <div className="flex h-32 sm:h-44">
           {packs.map((p) => <div key={p.id} className="min-w-0 flex-1 transition-[flex] duration-500 hover:flex-[3]"><PackArt packId={p.id} image={p.coverImage} /></div>)}

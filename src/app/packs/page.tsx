@@ -9,8 +9,7 @@ export default function PacksPage() {
   return (
     <div>
       <PageHeader eyebrow="Themen-Packs" title="15 Themenwelten – alle kostenlos">
-        Jedes Pack hat jeden Tag eine eigene Challenge mit {settings.packQuestionCount} neuen Fragen und einen Trainingsmodus, den du so oft spielen kannst, wie du willst.
-        <div className="mt-3"><ResetCountdown className="text-sm" /></div>
+        <ResetCountdown className="text-sm text-white/70" />
       </PageHeader>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {packs.map((p, i) => (

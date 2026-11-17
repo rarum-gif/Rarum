@@ -32,7 +32,7 @@ export function Logo({ className, withText = true }: { className?: string; withT
         <path d="M27.5 32 C 27.8 26, 28.6 20, 30.6 15.5" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
         <path d="M30.6 15.5 c -3 -1.8 -6 -1 -7.5 1 M30.6 15.5 c 2.6 -1.6 5.4 -0.8 6.6 1.4 M30.6 15.5 c -1 -2.6 -3.6 -3.6 -6 -3 M30.6 15.5 c 1.6 -2.4 4 -2.8 5.8 -1.8" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
       </svg>
-      {withText && <span className="font-display text-[28px] leading-none tracking-[0.08em] text-white">Rarum</span>}
+      {withText && <span className="font-display text-[28px] leading-none tracking-[0.08em] text-white">NNAXOS</span>}
     </span>
   );
 }

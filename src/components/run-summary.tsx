@@ -54,7 +54,7 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
   const shareText = () => {
     const grid = attempt.answers.map((a) => (a.tier ? SHARE_EMOJI[a.tier] : "⬛")).join("");
     const when = attempt.date ? formatDateDe(attempt.date, { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
-    return `Rarum · ${title(attempt, pack?.name)}${when ? " " + when : ""}\n${grid}  ${attempt.total}/${attempt.maxTotal}\n${typeof location !== "undefined" ? location.origin : ""}`;
+    return `NNAXOS · ${title(attempt, pack?.name)}${when ? " " + when : ""}\n${grid}  ${attempt.total}/${attempt.maxTotal}\n${typeof location !== "undefined" ? location.origin : ""}`;
   };
   const share = async () => {
     const text = shareText();

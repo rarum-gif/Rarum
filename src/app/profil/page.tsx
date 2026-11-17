@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { AvatarBubble, LocalDataNotice, StatTile, TierBadge } from "@/components/bits";
+import { AvatarBubble, StatTile, TierBadge } from "@/components/bits";
 import { AchievementMedal } from "@/components/achievement-medal";
 import { ACHIEVEMENTS, earnedAchievements } from "@/lib/game/stats";
 import { AVATARS } from "@/lib/avatars";
@@ -170,7 +170,6 @@ function ProfileInner() {
       </section>
 
       <SyncCard />
-      <LocalDataNotice />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile icon={Gem} label="Gesamtpunktzahl" value={fmt(stats.totalPoints)} />

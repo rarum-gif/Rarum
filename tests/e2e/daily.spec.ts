@@ -4,10 +4,10 @@ import { answerCurrent, answerKey } from "./helpers";
 test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", async ({ page, request }) => {
   const key = await answerKey(request);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Rarum" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "NNAXOS" })).toBeVisible();
   await page.getByRole("link", { name: /Play now/i }).click();
 
-  await expect(page.getByText("Offizielle Tageswertung")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Los geht's/ })).toBeVisible();
   await page.getByRole("button", { name: /Los geht's/ }).click();
 
   const picks = ["known", "alias", "rare", "Atlantis-gibt-es-nicht", "empty", "known", "known"];
@@ -16,7 +16,7 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
     await expect(page.getByRole("timer")).toBeVisible();
     await answerCurrent(page, key, picks[i]);
     if (picks[i] === "Atlantis-gibt-es-nicht") {
-      await expect(page.getByText("Diese Antwort ist noch nicht in unserer Antwortliste")).toBeVisible();
+      await expect(page.getByText("Kennen wir noch nicht")).toBeVisible();
       await page.getByRole("button", { name: "Antwort melden" }).click();
       await page.getByRole("dialog").getByRole("button", { name: "Melden" }).click();
       await expect(page.getByText("Danke, gemeldet!")).toBeVisible();
@@ -41,7 +41,7 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
 
   // Wiederholung ist nur Training
   await page.goto("/play?mode=daily");
-  await expect(page.getByText(/heute schon offiziell gespielt/)).toBeVisible();
+  await expect(page.getByText(/Heute schon gespielt/)).toBeVisible();
 
   // Gespeichert im Profil
   await page.goto("/profil");

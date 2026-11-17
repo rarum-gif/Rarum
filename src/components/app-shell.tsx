@@ -25,7 +25,7 @@ export const MENU = [
   {
     title: "Du",
     items: [
-      { href: "/profil", label: "Mein Rarum", hint: "Vermögen, Serie, Abzeichen", icon: User },
+      { href: "/profil", label: "Mein NNAXOS", hint: "Vermögen, Serie, Abzeichen", icon: User },
       { href: "/rangliste", label: "Rangliste", hint: "Tag · Woche · Allzeit", icon: Trophy },
       { href: "/profil#freunde", match: "/__friends", label: "Freunde", hint: "Einladen & vergleichen", icon: Users },
     ],
@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Menu className="size-5" />
             </button>
             {!home && (
-              <Link href="/" className="shrink-0" aria-label="Rarum – Hauptmenü">
+              <Link href="/" className="shrink-0" aria-label="NNAXOS – Hauptmenü">
                 <Logo />
               </Link>
             )}
@@ -180,7 +180,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {!playing && !home && (
           <footer className="relative z-[2] mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 pb-10 text-xs text-white/40">
-            <span>Rarum – je seltener die Antwort, desto reicher du. Kostenlos, ohne Werbung.</span>
+            <span>NNAXOS – je seltener die Antwort, desto reicher du.</span>
             <span className="flex gap-4">
               <Link href="/info" className="hover:text-white">So funktioniert&apos;s</Link>
               <Link href="/info#bilder" className="hover:text-white">Bildnachweise</Link>

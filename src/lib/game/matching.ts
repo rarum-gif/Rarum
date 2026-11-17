@@ -117,13 +117,16 @@ function candidatesFor(answers: Answer[]): Candidate[] {
 }
 
 const TIER_ORDER = ["known", "familiar", "unusual", "rare", "very_rare", "legendary"];
-const PERSON_PROMPT = /(person|präsident|kaiser|komponist|maler|architekt|erfinder|autor|schauspieler|sportler|entdecker|künstler|pharao|könig|monarch|ermittler|regie|weltmeister|gottheit)/i;
+const PERSON_PROMPT = /(person|präsident|kaiser|komponist|maler|architekt|erfinder|autor|schauspieler|sportler|entdecker|künstler|pharao|könig|monarch|ermittler|regie|weltmeister|gottheit|figur)/i;
+/** Bei erfundenen Figuren zählt auch der Vorname allein ("Trevor", "Hermine"). */
+const FICTION_PROMPT = /figur/i;
 const NAME_FILLERS = new Set(["der", "die", "das", "von", "van", "de", "del", "da", "di", "du", "le", "la", "jr", "junior", "senior", "sohn", "grosse", "gross", "altere", "jungere", "heilige"]);
 
 /** Kennzeichnende Namensteile einer Personen-Antwort (Nachname, ggf. Vorname bei Herrschern). */
-function nameTokens(form: string): string[] {
+function nameTokens(form: string, firstToo = false): string[] {
   const parts = form.split(" ").filter((p) => p && !/^\d+$/.test(p) && !NAME_FILLERS.has(p));
-  return parts.length >= 2 ? [parts[parts.length - 1]] : [];
+  if (parts.length < 2) return [];
+  return firstToo && parts[0].length >= 3 ? [parts[parts.length - 1], parts[0]] : [parts[parts.length - 1]];
 }
 
 /**
@@ -131,13 +134,13 @@ function nameTokens(form: string): string[] {
  * Teilen sich mehrere Antworten den Nachnamen, wird die bekannteste gewertet –
  * die Antwort ist in jedem Fall richtig.
  */
-function matchSurname(cands: Candidate[], inputCompact: string, fuzzy: boolean): Candidate | null {
+function matchSurname(cands: Candidate[], inputCompact: string, fuzzy: boolean, firstToo = false): Candidate | null {
   if (inputCompact.length < 3) return null;
   const tol = fuzzy ? allowedTypos(inputCompact.length) : 0;
   if (fuzzy && tol === 0) return null;
   let best: { cand: Candidate; dist: number } | null = null;
   for (const c of cands) {
-    for (const t of nameTokens(c.form)) {
+    for (const t of nameTokens(c.form, firstToo)) {
       if (fuzzy && t[0] !== inputCompact[0]) continue;
       const dist = fuzzy ? editDistance(t, inputCompact) : t === inputCompact ? 0 : 99;
       if (dist > tol) continue;
@@ -166,8 +169,9 @@ export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers">
   }
 
   const isPerson = !!question.prompt && PERSON_PROMPT.test(question.prompt) && !input.includes(" ");
+  const firstToo = !!question.prompt && FICTION_PROMPT.test(question.prompt);
   if (isPerson) {
-    const s = matchSurname(cands, inputCompact, false);
+    const s = matchSurname(cands, inputCompact, false, firstToo);
     if (s) return { kind: "answer", answer: s.answer, matchKind: "alias" };
   }
 
@@ -191,7 +195,7 @@ export function matchAnswer(question: Pick<Question, "answers" | "wrongAnswers">
     }
   }
   if (!best || ambiguous) {
-    const s = isPerson ? matchSurname(cands, inputCompact, true) : null;
+    const s = isPerson ? matchSurname(cands, inputCompact, true, firstToo) : null;
     return s ? { kind: "answer", answer: s.answer, matchKind: "fuzzy" } : { kind: "none" };
   }
 

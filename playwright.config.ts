@@ -17,6 +17,6 @@ export default defineConfig({
     command: `npx next start -p ${PORT}`,
     port: PORT,
     reuseExistingServer: false,
-    env: { RARUM_DATA_FILE: path.join(os.tmpdir(), `rarum-e2e-${Date.now()}.json`), ADMIN_PASSWORD: "e2e-secret", RUN_TOKEN_SECRET: "e2e-run-token-secret-0123456789" },
+    env: { NNAXOS_DATA_FILE: path.join(os.tmpdir(), `nnaxos-e2e-${Date.now()}.json`), ADMIN_PASSWORD: "e2e-secret", RUN_TOKEN_SECRET: "e2e-run-token-secret-0123456789" },
   },
 });

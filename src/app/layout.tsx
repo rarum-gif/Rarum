@@ -14,12 +14,12 @@ const space = Space_Grotesk({ subsets: ["latin"], variable: "--font-space", disp
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { default: "Rarum – das Quiz der seltenen Antworten", template: "%s · Rarum" },
+  title: { default: "NNAXOS – das Quiz der seltenen Antworten", template: "%s · NNAXOS" },
   description: "Jeden Tag neue Wissensfragen. Tippe deine eigene Antwort – je seltener sie ist, desto mehr Punkte. 15 Themenwelten, komplett kostenlos.",
-  applicationName: "Rarum",
+  applicationName: "NNAXOS",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icons/icon-192.png" },
-  appleWebApp: { capable: true, title: "Rarum", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "NNAXOS", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

@@ -23,8 +23,8 @@ export default function InfoPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Spielregeln</p>
-      <h1 className="font-display text-6xl">So funktioniert Rarum</h1>
-      <p className="mt-3 text-fg-muted">Rarum belohnt nicht nur Wissen, sondern Tiefe: Wer statt der naheliegenden Antwort eine seltene, aber korrekte findet, sammelt die meisten Punkte.</p>
+      <h1 className="font-display text-6xl">So funktioniert NNAXOS</h1>
+      <p className="mt-3 text-fg-muted">NNAXOS belohnt nicht nur Wissen, sondern Tiefe: Wer statt der naheliegenden Antwort eine seltene, aber korrekte findet, sammelt die meisten Punkte.</p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
         {items.map((i) => (
           <div key={i.title} className="glass rounded-3xl p-6">

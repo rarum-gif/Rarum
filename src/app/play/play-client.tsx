@@ -243,7 +243,7 @@ export function PlayClient() {
         {meta && (
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <span className="truncate text-xs font-bold uppercase tracking-[0.18em] text-white/80">{meta.title}</span>
-            {!meta.official && meta.mode !== "ranked" && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
+            {!meta.official && (meta.mode === "training" || meta.mode === "archive" || !!meta.practiceReason) && meta.mode !== "unlimited" && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
           </div>
         )}
         <WealthBadge points={totals.total} max={runMax} />
@@ -283,14 +283,10 @@ export function PlayClient() {
               <div className="-mt-10 px-6 pb-8 text-center sm:px-10">
                 <p className="text-sunset text-xs font-bold uppercase tracking-[0.24em]">{meta.subtitle}</p>
                 <h1 className="font-display mt-2 text-5xl text-white sm:text-6xl">{resumed ? "Weiter geht's" : meta.title}</h1>
-                <p className="mx-auto mt-3 max-w-md text-fg-muted">
-                  {meta.total ? `${meta.total} Fragen` : "Endlos viele Fragen"} · {app.settings.timeLimitSeconds} Sekunden pro Frage · Antwort selbst eintippen. Je seltener deine richtige Antwort, desto mehr Punkte.
+                <p className="mx-auto mt-3 max-w-md font-num text-sm uppercase tracking-[0.2em] text-white/70">
+                  {meta.total ? `${meta.total} Fragen` : "Endlos"} · {app.settings.timeLimitSeconds} Sek.
                 </p>
-                {meta.practiceReason === "already_played" && <Notice icon={Repeat2}>Du hast diese Challenge heute schon offiziell gespielt. Diese Runde ist ein Training und verändert deine Wertung nicht.</Notice>}
-                {meta.practiceReason === "past_date" && <Notice icon={BookOpen}>Archiv-Runde: zählt als Training, die damalige Wertung bleibt unverändert.</Notice>}
-                {meta.official && <Notice icon={Sparkles}>Offizielle Tageswertung – jede Challenge zählt nur einmal pro Tag.</Notice>}
-                {meta.mode === "ranked" && <Notice icon={Sparkles}>Ranked: Über 220 Punkte bringen Ranglistenpunkte, darunter verlierst du ein paar. Abbrechen hilft nicht – offene Matches zählen nach 30 Minuten.</Notice>}
-                {meta.repeats > 0 && <Notice icon={Info}>Der Fragenbestand ist begrenzt: {meta.repeats} dieser Fragen gab es bereits an einem früheren Tag. Sie sind entsprechend markiert.</Notice>}
+                {meta.practiceReason === "already_played" && <Notice icon={Repeat2}>Heute schon gespielt – das ist eine Trainingsrunde.</Notice>}
                 <Button size="lg" variant="sand" className="mt-7 min-w-56" onClick={begin} autoFocus>
                   {resumed ? "Fortsetzen" : "Los geht's"} <ArrowRight />
                 </Button>
@@ -432,9 +428,6 @@ function QuestionView({ payload, offset, input, setInput, submitting, onSubmit, 
         </div>
       </div>
 
-      {payload.question.repeat && (
-        <p className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-fg-muted"><Repeat2 className="size-3.5" />Wiederholung aus einem früheren Set</p>
-      )}
       <h2 className="text-[30px] font-extrabold leading-[1.12] tracking-tight text-balance text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] sm:text-[46px]">{payload.question.prompt}</h2>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -458,7 +451,6 @@ function QuestionView({ payload, offset, input, setInput, submitting, onSubmit, 
           Antworten
         </Button>
       </div>
-      <p className="mt-3 text-xs text-white/50">Enter zum Bestätigen · Gross-/Kleinschreibung und kleine Tippfehler sind egal.</p>
     </motion.form>
   );
 }
@@ -470,7 +462,7 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
   const head = {
     accepted: { icon: CheckCircle2, title: "Antwort erkannt!", tone: "text-success" },
     known_wrong: { icon: XCircle, title: "Leider nicht richtig", tone: "text-danger" },
-    unknown: { icon: CircleSlash, title: "Diese Antwort ist noch nicht in unserer Antwortliste", tone: "text-fg-muted" },
+    unknown: { icon: CircleSlash, title: "Kennen wir noch nicht", tone: "text-[var(--gold)]" },
     empty: { icon: CircleSlash, title: "Keine Antwort abgegeben", tone: "text-fg-muted" },
     timeout: { icon: Hourglass, title: "Die Zeit ist abgelaufen", tone: "text-fg-muted" },
   }[result.status];
@@ -511,7 +503,6 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
                 <TierBadge tier={result.tier} />
               </div>
               <RarityMeter tier={result.tier} />
-              <p className="mt-2 text-xs text-fg-subtle">{tierLabel(result.tier)} – redaktionell eingestuft</p>
             </div>
           )}
 
@@ -523,9 +514,8 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
           )}
 
           {result.status === "unknown" && (
-            <div className="mt-5 rounded-2xl border border-dashed border-line-strong p-4 text-sm text-fg-muted">
-              <p>Wir werten sie deshalb nicht – sie gilt aber nicht automatisch als falsch. Wenn du sicher bist, dass sie stimmt, melde sie unserer Redaktion.</p>
-              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setReportOpen(true)} disabled={reported}>
+            <div className="mt-5">
+              <Button variant="secondary" size="sm" onClick={() => setReportOpen(true)} disabled={reported}>
                 <Flag />{reported ? "Danke, gemeldet!" : "Antwort melden"}
               </Button>
             </div>
@@ -546,17 +536,6 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
             </div>
           )}
 
-          {result.sources.length > 0 && (
-            <p className="mt-5 text-xs text-fg-subtle">
-              Quelle:{" "}
-              {result.sources.slice(0, 2).map((s, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 && " · "}
-                  {s.url ? <a href={s.url} target="_blank" rel="noreferrer noopener" className="underline decoration-dotted underline-offset-2 hover:text-fg">{s.label}</a> : s.label}
-                </React.Fragment>
-              ))}
-            </p>
-          )}
         </div>
       </div>
 
@@ -568,7 +547,6 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
           {last ? "Ergebnis anzeigen" : "Weiter"} <ArrowRight />
         </Button>
       </div>
-      <p className="mt-2 text-right text-xs text-fg-subtle"><Clock className="mr-1 inline size-3" />Die nächste Frage startet erst, wenn du weiterklickst.</p>
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} questionId={result.questionId} answer={result.input} onDone={() => setReported(true)} />
     </motion.div>

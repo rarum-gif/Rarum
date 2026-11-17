@@ -1,8 +1,8 @@
-# Rarum – das Quiz der seltenen Antworten
+# NNAXOS – das Quiz der seltenen Antworten
 
 **Design: „Sunset Coast“** – eine filmische Küstenmetropole bei Sonnenuntergang und Nacht: Palmen, Skylines, Ocean-Drive-Architektur, Sunset-Verläufe aus Orange, Pink, Violett und Blau. Inspiriert von modernen Open-World-Spielwelten, aber vollständig eigenständig – keine Logos, Screenshots, Figuren oder Markenassets fremder Spiele.
 
-Rarum ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst (ohne Multiple Choice). Je **seltener deine richtige Antwort** ist, desto mehr Punkte bekommst du. Es gibt 15 Themen-Packs. Alles ist **kostenlos**: keine Werbung, keine Abos, keine Paywalls, keine Energie-Limits.
+NNAXOS ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst (ohne Multiple Choice). Je **seltener deine richtige Antwort** ist, desto mehr Punkte bekommst du. Es gibt 15 Themen-Packs. Alles ist **kostenlos**: keine Werbung, keine Abos, keine Paywalls, keine Energie-Limits.
 
 **Tech-Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui-artige Komponenten (Radix) · Lucide · Motion · Supabase (Auth + PostgreSQL + Realtime) · Vitest · Playwright
 
@@ -77,7 +77,7 @@ Gäste können ihre lokal gespielten Ergebnisse nach der Anmeldung ins Konto üb
 | `NEXT_PUBLIC_SUPABASE_URL` | optional | Supabase-Projekt-URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | optional | Öffentlicher Anon-Key |
 | `SUPABASE_SERVICE_ROLE_KEY` | optional | Nur serverseitig: Wertung, Admin, Seeding |
-| `RARUM_DATA_FILE` | optional | Pfad zum Demo-Datenspeicher |
+| `NNAXOS_DATA_FILE` | optional | Pfad zum Demo-Datenspeicher |
 
 ## Tests
 

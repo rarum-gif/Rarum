@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ChevronDown, ChevronUp, Crown, Flame, Gem, Infinity as InfinityIcon, LayoutGrid, RotateCcw, Swords, Trophy } from "lucide-react";
 import { useApp } from "@/components/providers";
-import { AnimatedNumber, LocalDataNotice, ResetCountdown } from "@/components/bits";
+import { AnimatedNumber, ResetCountdown } from "@/components/bits";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { cashOf, formatCash, STAGES, stageFor } from "@/lib/game/wealth";
 import { divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
@@ -19,9 +19,9 @@ import { cn } from "@/lib/utils";
 
 function Wordmark() {
   const reduce = useReducedMotion();
-  const letters = "RARUM".split("");
+  const letters = "NNAXOS".split("");
   return (
-    <h1 className="font-display title-chroma select-none text-center text-[clamp(84px,19vw,220px)] leading-[0.8] tracking-[0.04em] text-white" aria-label="Rarum">
+    <h1 className="font-display title-chroma select-none text-center text-[clamp(84px,19vw,220px)] leading-[0.8] tracking-[0.04em] text-white" aria-label="NNAXOS">
       {letters.map((l, i) => (
         <motion.span
           key={i}
@@ -163,7 +163,6 @@ function Hero() {
         </motion.p>
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95 }} className="mt-4 max-w-md text-[15px] text-white/85">
           Dein tägliches Wissen. Deine Antworten. Deine Punkte.
-          <span className="mt-1 block text-xs font-bold uppercase tracking-[0.24em] text-white/55">{settings.dailyQuestionCount} Fragen · {settings.timeLimitSeconds} Sekunden · seltene Antworten machen dich reich</span>
         </motion.p>
       </motion.div>
 
@@ -267,7 +266,6 @@ function Empire() {
           </motion.div>
         ))}
       </div>
-      <LocalDataNotice className="mt-6" />
       </div>
     </section>
   );

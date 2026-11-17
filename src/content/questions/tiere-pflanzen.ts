@@ -141,7 +141,7 @@ export default defineQuestions("tiere-pflanzen", [
       ["Borneo-Goldkatze", "L", "Nur auf Borneo heimisch, kaum erforscht.", ["Borneokatze"]],
       ["Kodkod", "L", "Kleinste Katze Amerikas, in Chile und Argentinien.", ["Chilenische Waldkatze"]],
     ],
-    wrong: [["Panther", "„Panther“ ist keine eigene Art – meist ist ein schwarzer Leopard oder Jaguar gemeint."], ["Hyäne", "Hyänen sind keine Katzen, sondern eine eigene Familie.", ["Hyane"]]],
+    wrong: [["Hyäne", "Hyänen sind keine Katzen, sondern eine eigene Familie.", ["Hyane"]]],
   },
   {
     id: "baumart-europa",

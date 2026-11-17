@@ -1,4 +1,4 @@
-// Zentrale Domänentypen von Rarum. Diese Typen werden von Server, Client,
+// Zentrale Domänentypen von NNAXOS. Diese Typen werden von Server, Client,
 // Seed-Skripten und Tests gemeinsam genutzt.
 
 export const TIER_IDS = ["known", "familiar", "unusual", "rare", "very_rare", "legendary"] as const;

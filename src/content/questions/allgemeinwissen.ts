@@ -131,6 +131,7 @@ export default defineQuestions("allgemeinwissen", [
       ["Senet", "L", "Altägyptisches Brettspiel, über 4500 Jahre alt."],
       ["Königliches Spiel von Ur", "L", "Mesopotamisches Rennspiel aus dem 3. Jahrtausend v. Chr.", ["Spiel von Ur", "Royal Game of Ur", "Ur"]],
     ],
+    wrong: [["Uno", "Uno ist ein Kartenspiel – ganz ohne Spielbrett."], ["Jenga", "Jenga ist ein Geschicklichkeitsspiel mit Holzklötzen, kein Brettspiel."], ["Poker", "Poker ist ein Kartenspiel."]],
   },
   {
     id: "griechische-gottheit",
@@ -159,7 +160,7 @@ export default defineQuestions("allgemeinwissen", [
       ["Eileithyia", "L", "Göttin der Geburt, Tochter von Zeus und Hera.", ["Ilithyia"]],
       ["Tyche", "L", "Göttin des Glücks und Schicksals einer Stadt."],
     ],
-    wrong: [["Jupiter", "Jupiter ist der römische Göttervater – sein griechisches Gegenstück ist Zeus."], ["Thor", "Thor stammt aus der nordischen Mythologie."], ["Herkules", "Herakles (lat. Herkules) war ein Halbgott und Held – er wurde erst nach seinem Tod vergöttlicht. Nenne lieber eine Gottheit.", ["Herakles"]]],
+    wrong: [["Jupiter", "Jupiter ist der römische Göttervater – sein griechisches Gegenstück ist Zeus."], ["Thor", "Thor stammt aus der nordischen Mythologie."]],
   },
   {
     id: "sternbild",

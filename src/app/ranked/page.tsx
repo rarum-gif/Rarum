@@ -67,9 +67,7 @@ export default function RankedPage() {
   return (
     <div>
       <SceneOverride scene="downtown" />
-      <PageHeader eyebrow={`${s.label} · endet in ${left}`} title="Ranked">
-        <p className="max-w-xl text-white/75">{RANKED_QUESTIONS} Fragen aus allen Welten. Holst du mehr als {RANKED_PAR} Punkte, steigen deine Ranglistenpunkte – darunter sinken sie ein wenig. Jeden Montag startet eine neue Saison bei {RANKED_START_RP} RP.</p>
-      </PageHeader>
+      <PageHeader eyebrow={`${s.label} · endet in ${left}`} title="Ranked" />
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass relative overflow-hidden rounded-[28px] p-6 sm:p-8">
@@ -134,7 +132,6 @@ export default function RankedPage() {
               <li className="flex justify-between"><span>100 Punkte</span><span className="font-num text-[var(--danger)]">{rankedDelta(100)} RP</span></li>
               <li className="flex justify-between"><span>0 Punkte</span><span className="font-num text-[var(--danger)]">{rankedDelta(0)} RP</span></li>
             </ul>
-            <p className="mt-3 text-xs text-white/50">Abgebrochene Matches zählen nach 30 Minuten mit ihrem Zwischenstand.</p>
           </div>
         </div>
       </section>
@@ -153,7 +150,7 @@ export default function RankedPage() {
         </div>
         {demo && (
           <p className="mb-4 rounded-2xl border border-dashed border-white/20 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
-            {data?.available ? "Melde dich an, um dich mit echten Spielerinnen und Spielern zu messen." : "Demo-Modus: Ohne Konten treten hier Beispiel-Rivalen an (gekennzeichnet), damit du die Liga ausprobieren kannst. Mit Supabase siehst du echte Spieler."}
+            {data?.available ? "Melde dich an, um gegen echte Spieler anzutreten." : "Demo-Liga mit Beispiel-Rivalen."}
           </p>
         )}
         <ol className="space-y-2">

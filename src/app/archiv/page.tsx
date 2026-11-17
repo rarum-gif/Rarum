@@ -49,9 +49,7 @@ export default function ArchivePage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Archiv" title="Vergangene Challenges">
-        Spiele frühere Tages-Sets erneut. Archiv-Runden zählen als Training und verändern die damalige offizielle Wertung nicht.
-      </PageHeader>
+      <PageHeader eyebrow="Archiv" title="Vergangene Challenges" />
 
       <Card className="mb-6 grid gap-3 p-4 sm:grid-cols-4">
         <label className="text-xs font-medium text-fg-subtle">Datum<Input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} className="mt-1 h-10" /></label>

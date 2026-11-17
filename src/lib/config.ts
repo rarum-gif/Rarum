@@ -1,4 +1,4 @@
-// Laufzeit-Konfiguration. Ohne Supabase-Zugangsdaten läuft Rarum im lokalen
+// Laufzeit-Konfiguration. Ohne Supabase-Zugangsdaten läuft NNAXOS im lokalen
 // Demo-Modus: Inhalte aus data/store.json, Spielstände im Browser.
 
 export function supabasePublicConfig() {
@@ -11,4 +11,4 @@ export function isSupabaseConfigured(): boolean {
   return !!(supabasePublicConfig() && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-export const APP_NAME = "Rarum";
+export const APP_NAME = "NNAXOS";

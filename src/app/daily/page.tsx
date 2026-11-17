@@ -4,7 +4,7 @@ import { ArrowRight, CalendarDays, Clock, Gem, ListChecks, Repeat2, Sparkles } f
 import { useApp } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DifficultyDots, LocalDataNotice, PageHeader, ResetCountdown, TierBadge } from "@/components/bits";
+import { DifficultyDots, PageHeader, ResetCountdown, TierBadge } from "@/components/bits";
 import { HeroArt } from "@/components/hero-art";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { addDays, formatDateDe } from "@/lib/time";
@@ -20,9 +20,7 @@ export default function DailyPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow="Daily Quiz" title="Die tägliche Challenge">
-        Jeden Tag {settings.dailyQuestionCount} neue Fragen aus verschiedenen Themenwelten – für alle gleich. Die offizielle Wertung zählt einmal pro Tag, der Wechsel erfolgt um Mitternacht (Schweizer Zeit).
-      </PageHeader>
+      <PageHeader eyebrow="Daily Quiz" title="Die tägliche Challenge" />
 
       <section className="relative isolate overflow-hidden rounded-[28px] border border-white/12 text-white shadow-[var(--shadow-lift)]">
         <HeroArt className="kenburns absolute inset-0 -z-10 h-full w-full" src="/images/backgrounds/oceandrive.webp" />
@@ -81,7 +79,6 @@ export default function DailyPage() {
                 <span className="font-num font-semibold text-white">{t.points} Pkt.</span>
               </div>
             ))}
-            <p className="pt-2 text-xs text-fg-subtle">Nur sachlich richtige Antworten aus unserer geprüften Antwortliste zählen. Die Seltenheit ist redaktionell eingestuft.</p>
           </CardContent>
         </Card>
       </div>
@@ -90,7 +87,6 @@ export default function DailyPage() {
         <Button asChild variant="secondary"><Link href="/archiv">Vergangene Challenges im Archiv</Link></Button>
         <Button asChild variant="ghost"><Link href="/info">Spielregeln im Detail</Link></Button>
       </div>
-      <LocalDataNotice />
     </div>
   );
 }
