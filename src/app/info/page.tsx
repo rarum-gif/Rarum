@@ -14,7 +14,7 @@ const items = [
   { icon: Clock, title: "Faire Zeit", text: "Pro Frage hast du 25 Sekunden. Die Zeit läuft auf dem Server: Neuladen der Seite bringt keine zusätzlichen Sekunden." },
   { icon: BadgeCheck, title: "Eine offizielle Wertung pro Tag", text: "Die Daily Challenge und die Tages-Challenges der Packs zählen einmal pro Tag. Wiederholungen und Archiv-Runden sind Trainingsrunden." },
   { icon: Gift, title: "Komplett kostenlos", text: "Alle 15 Themen-Packs und alle Spielmodi sind gratis. Keine Werbung, keine Abos, keine Energie- oder Lebenslimits." },
-  { icon: Sparkles, title: "Vom Strand zur Skyline", text: "Jeder Punkt ist 1’000 $ wert. In jeder Runde kletterst du elf Stufen hoch – von „Pleite am Strand“ bis zur „Privatinsel“. Dein Gesamtvermögen bestimmt deinen Karriere-Rang." },
+  { icon: Sparkles, title: "Geld, XP und Level", text: "Jede richtige Antwort bringt Geld – ab 50 $, seltene Antworten bis 400 $. Für jede abgeschlossene Runde gibt es XP. Mit jedem Level verdienst du 10 % mehr pro Antwort. Im Shop kaufst du dir dein Imperium – vom Gitarrenkoffer bis zur Privatinsel." },
   { icon: Scale, title: "Ranked", text: "7 Fragen aus allen Welten. Über 220 Punkte bringen Ranglistenpunkte (RP), darunter verlierst du ein paar. Jede Woche startet eine neue Saison mit Ligen von Bronze bis Champion." },
   { icon: ShieldCheck, title: "Datenschutz", text: "Öffentlich sichtbar sind nur Benutzername, Avatar und Punkte. Ohne Konto bleiben deine Ergebnisse ausschliesslich in deinem Browser." },
 ];

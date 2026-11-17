@@ -88,3 +88,25 @@ export function getPref(key: string): string | null {
 export function setPref(key: string, value: string) {
   safeSet("rarum.pref." + key, value);
 }
+
+// Käufe im Shop (Gäste). Mit Konto liegen sie auf dem Server.
+const PURCHASES = "rarum.v1.purchases";
+export interface LocalPurchase {
+  itemId: string;
+  price: number;
+  at: string;
+}
+export function loadLocalPurchases(): LocalPurchase[] {
+  try {
+    const raw = safeGet(PURCHASES);
+    const list = raw ? (JSON.parse(raw) as LocalPurchase[]) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+export function saveLocalPurchase(p: LocalPurchase): LocalPurchase[] {
+  const list = [...loadLocalPurchases().filter((x) => x.itemId !== p.itemId), p];
+  safeSet(PURCHASES, JSON.stringify(list));
+  return list;
+}

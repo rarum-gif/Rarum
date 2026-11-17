@@ -19,19 +19,9 @@ export function useTierLabel() {
 export function Logo({ className, withText = true }: { className?: string; withText?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 40 40" className="size-9 shrink-0 drop-shadow-[0_4px_14px_rgba(255,106,85,0.55)]" aria-hidden>
-        <defs>
-          <linearGradient id="logo-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a1745" /><stop offset="1" stopColor="#4a1630" /></linearGradient>
-          <linearGradient id="logo-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd36e" /><stop offset="0.55" stopColor="#ff7a45" /><stop offset="1" stopColor="#ff4f8b" /></linearGradient>
-        </defs>
-        <rect width="40" height="40" rx="11" fill="url(#logo-sky)" />
-        <circle cx="20" cy="23" r="11" fill="url(#logo-sun)" />
-        <rect x="6" y="25" width="28" height="1.6" fill="#2a1745" />
-        <rect x="6" y="28.5" width="28" height="2.2" fill="#2a1745" />
-        <rect x="4" y="31.5" width="32" height="9" fill="#1b1530" />
-        <path d="M27.5 32 C 27.8 26, 28.6 20, 30.6 15.5" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        <path d="M30.6 15.5 c -3 -1.8 -6 -1 -7.5 1 M30.6 15.5 c 2.6 -1.6 5.4 -0.8 6.6 1.4 M30.6 15.5 c -1 -2.6 -3.6 -3.6 -6 -3 M30.6 15.5 c 1.6 -2.4 4 -2.8 5.8 -1.8" stroke="#0c0a10" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-      </svg>
+      {/* Logo: die Portara von Naxos – antikes Marmortor mit Sonnenuntergang */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icon.svg" alt="" width={36} height={36} className="size-9 shrink-0 drop-shadow-[0_4px_14px_rgba(255,46,136,0.55)]" />
       {withText && <span className="font-display text-[28px] leading-none tracking-[0.08em] text-white">NNAXOS</span>}
     </span>
   );

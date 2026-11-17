@@ -6,7 +6,8 @@ import { Award, Check, Crown, Home, RotateCcw, Share2, Sparkles, TrendingUp } fr
 import type { AttemptRecord, TierId } from "@/lib/types";
 import { ACHIEVEMENTS, computeStats, earnedAchievements } from "@/lib/game/stats";
 import { formatDateDe } from "@/lib/time";
-import { cashOf, formatCash, stageFor } from "@/lib/game/wealth";
+import { formatCash } from "@/lib/game/wealth";
+import { computeEconomy } from "@/lib/game/economy";
 import { divisionFor, rankedDelta, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { cn, fmt } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -70,7 +71,10 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
     }
   };
 
-  const reached = stageFor(attempt.total, attempt.maxTotal || Math.max(1, attempt.answers.length) * 100);
+  const eco = computeEconomy([attempt, ...others.filter((x) => x.id !== attempt.id)]);
+  const round = eco.rounds[attempt.id] ?? { cash: 0, xp: 0, levelBefore: 1, levelAfter: 1 };
+  const levelUp = round.levelAfter > round.levelBefore;
+  const heroImg = attempt.packId ? `/images/themes/${attempt.packId}.webp` : attempt.mode === "ranked" ? "/images/backgrounds/downtown.webp" : attempt.mode === "unlimited" ? "/images/backgrounds/night.webp" : "/images/dashboard/daily.webp";
   const ranked = attempt.mode === "ranked";
   const seasonStart = season(today).start;
   const rpAfter = rankedFromAttempts([attempt, ...others], seasonStart);
@@ -84,21 +88,25 @@ export function RunSummary({ attempt, previous }: { attempt: AttemptRecord; prev
     <div className="mx-auto max-w-3xl space-y-6">
       <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="relative isolate overflow-hidden rounded-[28px] border border-white/15 p-8 text-center text-white shadow-[var(--shadow-lift)] sm:p-12">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/images/wealth/${reached.stage.image}.webp`} alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
+        <img src={heroImg} alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[rgba(12,8,20,0.35)] via-[rgba(12,8,20,0.7)] to-[rgba(12,8,20,0.95)]" />
         <p className="relative text-xs font-bold uppercase tracking-[0.28em] text-[var(--peach)]">
           {title(attempt, pack?.name)} {attempt.date ? "· " + formatDateDe(attempt.date, { day: "numeric", month: "long" }) : ""}
         </p>
         {!attempt.official && !ranked && <p className="relative mt-3 inline-block rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80">Trainingsrunde – zählt nicht für die offizielle Wertung</p>}
-        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="relative mt-5 text-sm font-bold uppercase tracking-[0.3em] text-white/70">Du hast es geschafft bis zur</motion.p>
-        <motion.h2 initial={{ opacity: 0, scale: 0.92, filter: "blur(8px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} transition={{ delay: 0.45, duration: 0.7 }} className="font-display title-chroma relative text-[64px] leading-[0.9] sm:text-[110px]">
-          {reached.stage.name}
+        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="relative mt-5 text-sm font-bold uppercase tracking-[0.3em] text-white/70">Verdient</motion.p>
+        <motion.h2 initial={{ opacity: 0, scale: 0.92, filter: "blur(8px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} transition={{ delay: 0.45, duration: 0.7 }} className="font-display title-chroma relative text-[72px] leading-[0.9] text-[var(--gold)] sm:text-[120px]">
+          +{formatCash(round.cash, { compact: false })}
         </motion.h2>
-        <p className="relative mt-1 text-white/75">{reached.stage.line}</p>
+        {levelUp && (
+          <motion.p initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1, type: "spring", damping: 10 }} className="btn-sunset relative mt-3 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-black uppercase tracking-[0.2em]">
+            <TrendingUp className="size-4" /> Level {round.levelAfter} erreicht!
+          </motion.p>
+        )}
         <div className="relative mt-6 flex flex-wrap items-end justify-center gap-x-8 gap-y-2">
           <div>
-            <p className="font-num text-5xl font-semibold text-white sm:text-6xl">{formatCash(cashOf(attempt.total))}</p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/55">verdient</p>
+            <p className="font-num text-5xl font-semibold text-white sm:text-6xl">+{round.xp}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/55">XP · Level {round.levelAfter}</p>
           </div>
           <div>
             <p className="font-num text-5xl font-semibold sm:text-6xl"><AnimatedNumber value={attempt.total} duration={1.4} className="text-sunset" /></p>

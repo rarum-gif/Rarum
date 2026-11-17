@@ -2,11 +2,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { ChevronDown, ChevronUp, Crown, Flame, Gem, Infinity as InfinityIcon, LayoutGrid, RotateCcw, Swords, Trophy } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, Flame, Gem, Infinity as InfinityIcon, LayoutGrid, Lock, RotateCcw, ShoppingBag, Swords, Trophy } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { AnimatedNumber, ResetCountdown } from "@/components/bits";
-import { maxPointsPerQuestion } from "@/lib/game/scoring";
-import { cashOf, formatCash, STAGES, stageFor } from "@/lib/game/wealth";
+import { formatCash } from "@/lib/game/wealth";
+import { SHOP, TIER_CASH, cashMultiplier } from "@/lib/game/economy";
 import { divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { daysBetween } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -49,8 +49,8 @@ function HowTo() {
         <ol className="mt-3 grid gap-2 text-sm text-white/85 sm:grid-cols-3">
           {[
             ["01", "Tippe eine eigene Antwort.", "Keine Auswahl – du denkst selbst."],
-            ["02", "Seltene Antworten zahlen mehr.", "10 bis 100 Punkte · jeder Punkt = 1’000 $."],
-            ["03", "Steig die Leiter hoch.", "Vom Strand bis zur Privatinsel."],
+            ["02", "Jede richtige Antwort zahlt.", "Ab 50 $ – seltene Antworten bringen mehr."],
+            ["03", "Level aufsteigen, Imperium kaufen.", "Mehr Level = mehr Geld pro Antwort."],
           ].map(([n, t, d]) => (
             <li key={n} className="hud rounded-xl px-3 py-2.5">
               <span className="font-num text-xs text-[var(--peach)]">{n}</span>
@@ -88,16 +88,15 @@ function RankedCard() {
 }
 
 function PlayButton() {
-  const { overview, hasOfficial, attemptsLoaded, settings } = useApp();
+  const { overview, hasOfficial, attemptsLoaded, settings, economy } = useApp();
   const played = hasOfficial(overview?.daily?.id);
   const reduce = useReducedMotion();
   if (played) {
-    const st = stageFor(played.total, played.maxTotal);
     return (
       <Link href={`/ergebnis/${played.id}`} className="cta-glow group relative flex h-[76px] w-full items-center justify-center gap-4 overflow-hidden rounded-2xl border border-white/30 bg-[rgba(12,8,24,0.72)] backdrop-blur-xl">
         <Trophy className="size-6 text-[var(--gold)]" />
-        <span className="font-display text-3xl tracking-[0.12em] text-white sm:text-4xl">Heute: {formatCash(cashOf(played.total))}</span>
-        <span className="hidden text-xs font-bold uppercase tracking-[0.2em] text-white/60 sm:inline">{st.stage.name}</span>
+        <span className="font-display text-3xl tracking-[0.12em] text-white sm:text-4xl">Heute: {played.total} Punkte</span>
+        <span className="hidden text-xs font-bold uppercase tracking-[0.2em] text-white/60 sm:inline">+{formatCash(economy.rounds[played.id]?.cash ?? 0)}</span>
       </Link>
     );
   }
@@ -125,23 +124,6 @@ function ModeChip({ href, children }: { href: string; children: React.ReactNode 
   );
 }
 
-/** Vertikales Lineal am rechten Rand – das Pendant zur Tiefenanzeige, nur nach oben. */
-function CashRuler() {
-  const { settings } = useApp();
-  const max = settings.dailyQuestionCount * maxPointsPerQuestion(settings);
-  return (
-    <div className="pointer-events-none absolute right-3 top-24 bottom-28 hidden w-14 flex-col justify-between md:flex" aria-hidden>
-      {STAGES.slice().reverse().map((s, i) => (
-        <motion.div key={s.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + i * 0.05 }} className="flex items-center justify-end gap-1.5">
-          <span className="font-num text-[9px] text-white/55">{formatCash(cashOf(Math.round(s.at * max)))}</span>
-          <span className={cn("h-px bg-white/45", i % 2 ? "w-2" : "w-3.5")} />
-        </motion.div>
-      ))}
-      <span className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-white/50 via-white/25 to-white/5" />
-    </div>
-  );
-}
-
 function Hero() {
   const { overview, settings, attemptsLoaded } = useApp();
   const episode = overview ? Math.max(1, daysBetween(settings.launchDate, overview.today) + 1) : null;
@@ -152,7 +134,6 @@ function Hero() {
   return (
     <section ref={ref} className="relative left-1/2 flex min-h-[100svh] w-screen -translate-x-1/2 flex-col items-center justify-between px-4 pb-6 pt-20 sm:px-6">
       <div className="vignette pointer-events-none absolute inset-0" />
-      <CashRuler />
       <motion.div style={{ opacity: fade, y: lift }} className="relative mt-[6vh] flex flex-col items-center text-center">
         <motion.p initial={{ opacity: 0, letterSpacing: "0.8em" }} animate={{ opacity: 1, letterSpacing: "0.42em" }} transition={{ duration: 1.2 }} className="mb-3 text-[11px] font-bold uppercase text-white/85 sm:text-xs">
           Ready for today&apos;s challenge?
@@ -183,71 +164,61 @@ function Hero() {
         {!attemptsLoaded && <div className="sr-only">Lädt …</div>}
       </motion.div>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="mt-4 flex flex-col items-center text-[10px] font-bold uppercase tracking-[0.3em] text-white/45">
-        Die Leiter
+        Dein Imperium
         <ChevronDown className="mt-1 size-4 animate-bounce" />
       </motion.div>
     </section>
   );
 }
 
-function Ladder() {
-  const { settings, attempts } = useApp();
-  const max = settings.dailyQuestionCount * maxPointsPerQuestion(settings);
-  const best = attempts.filter((a) => a.mode === "daily" && a.official).reduce((m, a) => Math.max(m, a.maxTotal ? a.total / a.maxTotal : 0), 0);
-  const reached = stageFor(best * max, max).index;
+function ShopTeaser() {
+  const { purchases, economy } = useApp();
+  const owned = new Set(purchases.map((p) => p.itemId));
   return (
     <section className="relative left-1/2 w-screen -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(8,5,16,0.82)] to-[rgba(8,5,16,0.92)] px-4 py-16 sm:px-6">
-      <div className="relative mx-auto max-w-3xl">
-      <div className="mb-12 text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--peach)]">Eine Runde · elf Stufen</p>
-        <h2 className="font-display mt-2 text-6xl text-white sm:text-7xl">Die Leiter</h2>
-        <p className="mx-auto mt-3 max-w-md text-white/70">Jede richtige Antwort bringt Geld. Je seltener sie ist, desto schneller kletterst du – ein perfekter Lauf endet auf der Privatinsel.</p>
-      </div>
-      <div className="absolute bottom-16 left-[27px] top-56 w-px bg-gradient-to-b from-white/5 via-white/30 to-[var(--sunset-pink)] sm:left-1/2" aria-hidden />
-      <ol className="space-y-10">
-        {STAGES.map((s, i) => {
-          const left = i % 2 === 0;
-          const done = attempts.length > 0 && i <= reached;
-          return (
-            <motion.li
-              key={s.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-              className="relative grid items-center gap-4 pl-16 sm:grid-cols-2 sm:gap-12 sm:pl-0"
-            >
-              <span className={cn("absolute left-[19px] top-1/2 z-10 grid size-[18px] -translate-y-1/2 place-items-center rounded-full border-2 sm:left-1/2 sm:-translate-x-1/2", done ? "border-white bg-[var(--sunset-pink)] shadow-[0_0_20px_var(--sunset-pink)]" : "border-white/40 bg-[#120c1e]")} />
-              <div className={cn("group relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/15 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]", left ? "sm:mr-4" : "sm:order-2 sm:ml-4")}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/wealth/${s.image}.webp`} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-110" />
-                <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                <span className="font-num absolute bottom-2 left-3 text-sm font-semibold text-white">{formatCash(cashOf(Math.round(s.at * max)))}+</span>
-              </div>
-              <div className={cn(left ? "sm:text-left" : "sm:text-right")}>
-                <p className="font-num text-[11px] uppercase tracking-[0.3em] text-white/45">Stufe {String(i + 1).padStart(2, "0")}</p>
-                <h3 className="font-display text-4xl tracking-wide text-white">{s.name}</h3>
-                <p className="text-white/70">{s.line}</p>
-              </div>
-            </motion.li>
-          );
-        })}
-      </ol>
-      <p className="font-display mt-14 text-center text-3xl tracking-[0.2em] text-white/80">— ein perfekter Lauf endet hier —</p>
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--peach)]">Shop</p>
+            <h2 className="font-display mt-1 text-6xl text-white">Vom Strand zur Insel</h2>
+          </div>
+          <Link href="/shop" className="btn-sunset inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold uppercase tracking-[0.14em]"><ShoppingBag className="size-4" />Zum Shop</Link>
+        </div>
+        <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
+          {SHOP.map((it, i) => {
+            const locked = economy.level.level < it.minLevel;
+            return (
+              <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }} className="snap-start">
+                <Link href="/shop" className="group relative block h-56 w-44 overflow-hidden rounded-2xl border border-white/12 sm:w-52">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/wealth/${it.image}.webp`} alt="" loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-[1.4s] group-hover:scale-110", locked && "brightness-75 grayscale-[50%]")} />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                  {owned.has(it.id) && <span className="absolute right-2 top-2 rounded-full bg-[var(--gold)] px-2 py-0.5 text-[10px] font-black uppercase text-black">Dein</span>}
+                  {locked && <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white"><Lock className="size-3" />Lvl {it.minLevel}</span>}
+                  <span className="absolute bottom-3 left-3 right-3">
+                    <span className="font-display block text-2xl leading-none tracking-wide text-white">{it.name}</span>
+                    <span className="font-num text-sm text-white/80">{formatCash(it.price)}</span>
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
 }
 
 function Empire() {
-  const { stats, level, attemptsLoaded, attempts, today } = useApp();
+  const { stats, attemptsLoaded, attempts, today, wallet, economy } = useApp();
   const me = rankedFromAttempts(attempts, season(today).start);
   const div = divisionFor(me.rp);
+  const lvl = economy.level;
   const tiles = [
-    { icon: Gem, label: "Vermögen", value: attemptsLoaded ? formatCash(cashOf(stats.totalPoints)) : "–", hint: `${level.current.name}${level.next ? ` · nächster Rang: ${level.next.name}` : ""}` },
+    { icon: Gem, label: "Kontostand", value: attemptsLoaded ? formatCash(wallet.balance) : "–", hint: `Vermögen ${formatCash(wallet.netWorth)}` },
+    { icon: Trophy, label: `Level ${lvl.level}`, value: lvl.title, hint: `${lvl.toNext} XP bis Level ${lvl.level + 1} · ${formatCash(Math.round(TIER_CASH.known * cashMultiplier(lvl.level)))}+ pro Antwort` },
     { icon: Flame, label: "Serie", value: `${stats.streak.current} ${stats.streak.current === 1 ? "Tag" : "Tage"}`, hint: `Rekord: ${stats.streak.longest}` },
     { icon: Crown, label: "Ranked", value: `${me.rp} RP`, hint: me.matches ? `${div.division.name} · ${me.matches} Matches` : "Noch kein Match diese Saison" },
-    { icon: Trophy, label: "Challenges", value: <AnimatedNumber value={stats.officialCount} />, hint: `${stats.dailyCount} Daily · ${stats.packCount} Packs` },
   ];
   return (
     <section className="relative left-1/2 w-screen -translate-x-1/2 bg-[rgba(8,5,16,0.92)] px-4 pb-16 pt-4 sm:px-6">
@@ -275,7 +246,7 @@ export default function HomePage() {
   return (
     <div>
       <Hero />
-      <Ladder />
+      <ShopTeaser />
       <Empire />
     </div>
   );

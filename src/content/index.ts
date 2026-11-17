@@ -2,6 +2,7 @@ import type { ContentData, Question } from "@/lib/types";
 import { seedPacks, seedSettings } from "./packs";
 import { defineQuestions, wsearch } from "./dsl";
 import { applyExtras } from "./extras";
+import { buildLetterVariants } from "./variants";
 import allgemeinwissen from "./questions/allgemeinwissen";
 import sport from "./questions/sport";
 import musik from "./questions/musik";
@@ -42,7 +43,7 @@ const drafts: Question[] = defineQuestions("geografie", [
 ]);
 
 /** Bei inhaltlichen Seed-Änderungen erhöhen – bestehende Demo-Stores übernehmen sie dann automatisch. */
-export const CONTENT_REVISION = 3;
+export const CONTENT_REVISION = 4;
 
 export function seedContent(): ContentData {
   const questions = applyExtras([
@@ -50,5 +51,6 @@ export function seedContent(): ContentData {
     ...filmeSerien, ...gaming, ...essenTrinken, ...literatur, ...technik, ...kunstKultur, ...markenWirtschaft, ...reisen,
     ...drafts,
   ]);
+  questions.push(...buildLetterVariants(questions));
   return structuredClone({ settings: seedSettings, packs: seedPacks, questions });
 }

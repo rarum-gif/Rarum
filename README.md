@@ -8,6 +8,10 @@ NNAXOS ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst
 
 ## Spielsystem
 
+- **Geld, XP und Level** (`src/lib/game/economy.ts`): Jede richtige Antwort bringt Geld (50 $ bis 400 $ je nach Seltenheit), jede abgeschlossene Runde XP. Pro Level gibt es 10 % mehr Geld pro Antwort. Alles wird aus den gespeicherten Runden nachgerechnet – auch der Server, bevor er einen Kauf im **Shop** (`/shop`) bestätigt.
+- **Schwierige Fragen**: Aus grossen Antwortlisten entstehen automatisch Varianten mit Anfangsbuchstaben (`src/content/variants.ts`).
+- **Keine Beispielantworten** nach einer Frage – so bleiben seltene Antworten selten.
+
 - **Hauptmenü** im Stil eines Spiels: Menü-Knopf mit Seitenleiste (Spielen · Du · Mehr), grosser Titel, „PLAY NOW“, Ranked-Karte und Modus-Leiste (Archiv · Themen-Packs · Unlimited). Darunter „Die Leiter“.
 - **Vom Strand zur Skyline** (`src/lib/game/wealth.ts`): Jeder Punkt ist 1’000 $ wert. In jeder Runde steigst du elf Stufen hoch – Pleite am Strand → Strassenmusiker → Food Truck → Motel → Cabrio → Nachtclub → Strandvilla → Penthouse → Superyacht → Privatjet → Privatinsel. Der Quiz-Bildschirm zeigt Kontostand, Stufe und eine kletternde Leiste; das Ergebnis zeigt die erreichte Stufe. Das Gesamtvermögen (offizielle Punkte) bestimmt den Karriere-Rang (Pleite … Legende der Küste).
 - **Ranked** (`/ranked`, `src/lib/game/ranked.ts`, Migration `20261118000000_ranked.sql`): 7 Zufallsfragen aus allen Welten. RP-Änderung = (Punkte − 220) / 6, begrenzt auf −25 … +60. Wöchentliche Saison (Mo 00:00 Europe/Zurich, Start bei 1000 RP), Ligen Bronze · Silber · Gold · Platin · Diamant · Champion. Abgebrochene Matches zählen nach 30 Minuten mit ihrem Zwischenstand. Ohne Supabase zeigt die Liga klar gekennzeichnete Demo-Rivalen.
@@ -60,10 +64,10 @@ Im Demo-Modus gilt:
 ## Mit Supabase (Konten, Synchronisierung, Freunde, Ranglisten)
 
 1. Lege ein Supabase-Projekt an.
-2. Führe `supabase/migrations/20261117000000_rarum_schema.sql` aus, im SQL-Editor oder mit `supabase db push`.
+2. Führe alle Dateien in `supabase/migrations/` der Reihe nach aus (Schema, Ranked, Shop), im SQL-Editor oder mit `supabase db push`.
 3. Spiele die Seed-Daten ein: `supabase/seed.sql`. Mit `supabase db reset` geschieht das automatisch. Neu erzeugen lässt sich die Datei mit `npm run db:seed-sql`.
 4. Trage die Werte in `.env.local` ein (siehe `.env.example`).
-5. Unter Auth → URL Configuration: Trage `https://deine-domain/auth/callback` als Redirect-URL ein.
+5. **Spielerkonten ohne E-Mail:** Unter Authentication → Sign In / Providers → Email die Option **„Confirm email“ ausschalten**. Spieler registrieren sich nur mit Benutzername und Passwort (intern wird daraus eine nie zustellbare Adresse `name@spieler.nnaxos.invalid`).
 6. Admin-Rechte für ein Konto vergeben: `update public.profiles set role = 'admin' where username = '…';`
 
 Gäste können ihre lokal gespielten Ergebnisse nach der Anmeldung ins Konto übernehmen. Übernommen werden nur Ergebnisse mit gültiger Server-Signatur, und bereits gewertete Tage werden nicht doppelt gezählt.

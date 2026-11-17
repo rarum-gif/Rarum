@@ -17,7 +17,8 @@ import { api, ApiError } from "@/lib/client/api";
 import { clearLocalAttempts, loadLocalAttempts, replaceLocalAttempts } from "@/lib/client/local";
 import { browserSupabase } from "@/lib/client/supabase";
 import { formatDateDe } from "@/lib/time";
-import { cashOf, formatCash } from "@/lib/game/wealth";
+import { formatCash } from "@/lib/game/wealth";
+import { shopItem } from "@/lib/game/economy";
 import { cn, fmt } from "@/lib/utils";
 
 function SyncCard() {
@@ -109,7 +110,7 @@ function EditProfile({ open, onOpenChange }: { open: boolean; onOpenChange: (v: 
 }
 
 function ProfileInner() {
-  const { user, accountsEnabled, stats, level, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession } = useApp();
+  const { user, accountsEnabled, stats, level, economy, wallet, purchases, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession } = useApp();
   const [edit, setEdit] = React.useState(false);
   const earned = earnedAchievements(stats, attempts);
   const records = [
@@ -148,12 +149,25 @@ function ProfileInner() {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-display text-6xl text-white sm:text-7xl">{user?.username ?? "Gast"}</h1>
-            <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Rang {level.current.level} · {level.current.name}</span>
+            <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Level {level.current.level} · {level.current.name}</span>
           </div>
           <div className="mt-3 max-w-md">
             <Progress value={level.progress} />
-            <p className="font-num mt-3 text-4xl font-semibold text-white">{formatCash(cashOf(stats.totalPoints))} <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-white/55">Vermögen</span></p>
-            <p className="mt-1.5 text-xs text-white/70">{level.next ? `${fmt(stats.totalPoints)} Punkte · noch ${formatCash(cashOf(level.toNext))} bis „${level.next.name}“` : `${fmt(stats.totalPoints)} Punkte · höchster Rang erreicht`}</p>
+            <p className="mt-1.5 font-num text-xs text-white/70">{economy.xp} XP · noch {level.toNext} XP bis Level {level.current.level + 1}</p>
+            <p className="font-num mt-3 text-4xl font-semibold text-white">{formatCash(wallet.balance, { compact: false })} <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-white/55">Kontostand</span></p>
+            {purchases.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {purchases.map((p) => {
+                  const it = shopItem(p.itemId);
+                  return it ? (
+                    <span key={p.itemId} className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/40 bg-black/40 py-1 pl-1 pr-3 text-xs font-semibold text-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/images/wealth/${it.image}.webp`} alt="" className="size-6 rounded-full object-cover" />{it.name}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

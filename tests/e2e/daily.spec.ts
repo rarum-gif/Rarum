@@ -30,13 +30,14 @@ test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", asyn
   }
 
   await expect(page.getByText("von 700 Punkten")).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("Du hast es geschafft bis zur")).toBeVisible();
+  await expect(page.getByText("Verdient", { exact: true })).toBeVisible();
+  await expect(page.getByText(/XP · Level/)).toBeVisible();
   await expect(page.getByText("Deine Antworten")).toBeVisible();
   await expect(page.locator("ol > li")).toHaveCount(7);
 
   // Startseite zeigt Ergebnis, Serie und Punkte
   await page.goto("/");
-  await expect(page.getByRole("link", { name: /Heute: \$/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Heute: \d+ Punkte/ })).toBeVisible();
   await expect(page.getByText("1 Tag", { exact: true })).toBeVisible();
 
   // Wiederholung ist nur Training
@@ -104,4 +105,19 @@ test("Ranked: Match spielen und RP erhalten", async ({ page, request }) => {
   await expect(page.getByText(/RP · jetzt \d+/)).toBeVisible({ timeout: 10_000 });
   await page.goto("/ranked");
   await expect(page.getByText("1 Matches", { exact: false }).first()).toBeVisible();
+});
+
+test("Shop: Geld verdienen und etwas kaufen", async ({ page, request }) => {
+  const key = await answerKey(request);
+  await page.goto("/play?mode=training&pack=geografie");
+  await page.getByRole("button", { name: /Los geht's/ }).click();
+  for (let i = 0; i < 5; i++) {
+    await expect(page.locator("form h2")).toBeVisible({ timeout: 10_000 });
+    await answerCurrent(page, key, "rare");
+    await page.getByRole("button", { name: i === 4 ? "Ergebnis anzeigen" : "Weiter" }).click();
+  }
+  await expect(page.getByText("Verdient", { exact: true })).toBeVisible({ timeout: 10_000 });
+  await page.goto("/shop");
+  await page.getByRole("article").filter({ hasText: "Gitarrenkoffer" }).getByRole("button", { name: "Kaufen" }).click();
+  await expect(page.getByText("Gitarrenkoffer gehört jetzt dir!")).toBeVisible();
 });

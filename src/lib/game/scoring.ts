@@ -1,6 +1,5 @@
 import type { Answer, AnswerResult, GameSettings, Question, RarityTier, TierId } from "@/lib/types";
 import { matchAnswer } from "./matching";
-import { fnv1a } from "./schedule";
 
 /** Kulanzzeit für Netzwerklatenz beim automatischen Absenden nach Zeitablauf. */
 export const GRACE_MS = 3000;
@@ -24,15 +23,12 @@ export function timeLimitOf(settings: GameSettings, q: Pick<Question, "timeLimit
   return q.timeLimitSeconds && q.timeLimitSeconds > 0 ? q.timeLimitSeconds : settings.timeLimitSeconds;
 }
 
-/** Ein paar andere gültige Antworten zeigen – eine bekannte und eine seltene. */
-function examplesFor(q: Question, excludeId: string | null): { text: string; tier: TierId }[] {
-  const ok = q.answers.filter((a) => a.status === "verified" && a.id !== excludeId);
-  if (!ok.length) return [];
-  const order = ["known", "familiar", "unusual", "rare", "very_rare", "legendary"];
-  const sorted = ok.slice().sort((a, b) => order.indexOf(a.tier) - order.indexOf(b.tier) || fnv1a(a.id) - fnv1a(b.id));
-  const picks = [sorted[0], sorted[Math.floor(sorted.length / 2)], sorted[sorted.length - 1]];
-  const unique = picks.filter((a, i) => picks.findIndex((b) => b.id === a.id) === i);
-  return unique.map((a) => ({ text: a.text, tier: a.tier }));
+/**
+ * Keine Beispielantworten verraten: Fragen kehren wieder, und wer die seltenen
+ * Antworten einmal gesehen hat, könnte sie beim nächsten Mal einfach abschreiben.
+ */
+function examplesFor(_q: Question, _excludeId: string | null): { text: string; tier: TierId }[] {
+  return [];
 }
 
 export interface EvaluateOptions {

@@ -80,3 +80,32 @@ describe("Saison", () => {
     expect(season("2026-11-17").startKey).toBe("2026-11-16");
   });
 });
+
+describe("Wirtschaft", () => {
+  it("zahlt Geld pro richtiger Antwort, XP pro Runde und steigert das Level", async () => {
+    const { computeEconomy, cashForAnswer, levelForXp, canBuy, SHOP } = await import("@/lib/game/economy");
+    expect(cashForAnswer("known", 1)).toBe(50);
+    expect(cashForAnswer("legendary", 11)).toBe(800);
+    expect(levelForXp(0).level).toBe(1);
+    expect(levelForXp(250).level).toBe(2);
+    const ans = (status: "accepted" | "unknown", tier: "known" | "rare" | null) => ({ questionId: "q", prompt: "", packId: "p", input: "", status, answerText: null, tier, points: 0 });
+    const base = { official: true, setId: "s", date: "2026-11-17", packId: null, maxTotal: 700, total: 0 };
+    const eco = computeEconomy([
+      { ...base, id: "a", mode: "daily", answers: [ans("accepted", "known"), ans("accepted", "rare"), ans("unknown", null)], startedAt: "2026-11-17T08:00:00Z", finishedAt: "2026-11-17T08:05:00Z" },
+    ]);
+    expect(eco.earned).toBe(230);
+    expect(eco.xp).toBe(130);
+    expect(canBuy(SHOP[0], eco, [])).toBe("Nicht genug Geld.");
+    expect(canBuy(SHOP[0], { ...eco, earned: 1000 }, [])).toBeNull();
+    expect(canBuy(SHOP[SHOP.length - 1], eco, [])).toMatch(/Level/);
+  });
+  it("erzeugt schwierige Buchstaben-Varianten mit erklärten Fehlantworten", () => {
+    const qs = seedContent().questions;
+    const v = qs.filter((q) => q.id.includes("-buchstabe-"));
+    expect(v.length).toBeGreaterThan(40);
+    const any = v[0];
+    expect(any.difficulty).toBe(3);
+    expect(any.answers.every((a) => any.prompt.includes(`„${a.text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/^[^A-Za-z0-9]+/, "")[0].toUpperCase()}“`))).toBe(true);
+    expect((any.wrongAnswers ?? []).some((w) => w.explanation.includes("beginnt nicht"))).toBe(true);
+  });
+});

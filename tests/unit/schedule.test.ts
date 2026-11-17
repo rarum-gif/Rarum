@@ -45,7 +45,8 @@ describe("Daily-Content-System", () => {
     // erster Tag: nur neue Fragen; Pack-Sets ab Tag 2 enthalten markierte Wiederholungen
     expect(daily[0].items.every((i) => !i.repeat)).toBe(true);
     const geo2 = sets.find((s) => s.id === `pack:geografie:${addDays(launch, 1)}`)!;
-    expect(geo2.items.filter((i) => !i.repeat).length).toBe(3); // 8 Geografie-Fragen: 5 + 3 neue
+    const geoPool = content.questions.filter((q) => q.packId === "geografie" && q.status === "verified").length;
+    expect(geo2.items.filter((i) => !i.repeat).length).toBe(Math.min(5, geoPool - 5));
   });
 
   it("verändert bereits veröffentlichte Sets nicht, wenn neue Fragen dazukommen", () => {

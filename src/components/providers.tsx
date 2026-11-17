@@ -1,9 +1,10 @@
 "use client";
 import * as React from "react";
 import type { AttemptRecord, GameSettings, ThemePack } from "@/lib/types";
-import { computeStats, levelFor, type UserStats } from "@/lib/game/stats";
+import { computeStats, type UserStats } from "@/lib/game/stats";
+import { canBuy, computeEconomy, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
-import { loadLocalAttempts, saveLocalAttempt } from "@/lib/client/local";
+import { loadLocalAttempts, loadLocalPurchases, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
 
 export interface SetSummary {
   id: string;
@@ -46,7 +47,12 @@ interface AppState {
   today: string;
   serverOffset: number;
   stats: UserStats;
-  level: ReturnType<typeof levelFor>;
+  /** Level aus XP (Kompatibilitätsform für bestehende Anzeigen) */
+  level: { current: { level: number; name: string }; next: { level: number; name: string } | null; toNext: number; progress: number };
+  economy: Economy;
+  purchases: Purchase[];
+  wallet: ReturnType<typeof walletOf>;
+  buy: (itemId: string) => Promise<string | null>;
   refreshOverview: () => Promise<void>;
   refreshSession: () => Promise<void>;
   reloadAttempts: () => Promise<void>;
@@ -70,6 +76,7 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const [attemptsLoaded, setAttemptsLoaded] = React.useState(false);
   const [overview, setOverview] = React.useState<Overview | null>(initialOverview);
   const [serverOffset, setServerOffset] = React.useState(0);
+  const [purchases, setPurchases] = React.useState<Purchase[]>([]);
 
   const refreshOverview = React.useCallback(async () => {
     try {
@@ -101,8 +108,15 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
       } catch {
         setAttempts([]);
       }
+      try {
+        const r = await api<{ purchases: Purchase[] }>("/api/shop");
+        setPurchases(r.purchases);
+      } catch {
+        setPurchases([]);
+      }
     } else {
       setAttempts(loadLocalAttempts());
+      setPurchases(loadLocalPurchases());
     }
     setAttemptsLoaded(true);
   }, [user]);
@@ -131,13 +145,35 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
 
   const today = overview?.today ?? new Date().toISOString().slice(0, 10);
   const stats = React.useMemo(() => computeStats(attempts, packs, today), [attempts, packs, today]);
-  const level = React.useMemo(() => levelFor(settings.levels, stats.totalPoints), [settings.levels, stats.totalPoints]);
+  const economy = React.useMemo(() => computeEconomy(attempts), [attempts]);
+  const wallet = React.useMemo(() => walletOf(economy, purchases), [economy, purchases]);
+  const level = React.useMemo(() => {
+    const l = economy.level;
+    return { current: { level: l.level, name: l.title }, next: { level: l.level + 1, name: `Level ${l.level + 1}` }, toNext: l.toNext, progress: l.progress };
+  }, [economy]);
+  const buy = React.useCallback(async (itemId: string) => {
+    const item = shopItem(itemId);
+    if (!item) return "Unbekannter Artikel.";
+    const err = canBuy(item, economy, purchases);
+    if (err) return err;
+    if (user) {
+      try {
+        const r = await api<{ purchases: Purchase[] }>("/api/shop", { json: { itemId } });
+        setPurchases(r.purchases);
+        return null;
+      } catch (e) {
+        return e instanceof Error ? e.message : "Kauf fehlgeschlagen.";
+      }
+    }
+    setPurchases(saveLocalPurchase({ itemId, price: item.price, at: new Date().toISOString() }));
+    return null;
+  }, [economy, purchases, user]);
   const packById = React.useCallback((id: string | null | undefined) => packs.find((p) => p.id === id), [packs]);
   const hasOfficial = React.useCallback((setId: string | null | undefined) => (setId ? attempts.find((a) => a.official && a.setId === setId) : undefined), [attempts]);
 
   const value: AppState = {
     packs, settings, accountsEnabled, user, sessionLoaded, attempts, attemptsLoaded, storage: user ? "account" : "local",
-    overview, today, serverOffset, stats, level, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial,
+    overview, today, serverOffset, stats, level, economy, purchases, wallet, buy, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

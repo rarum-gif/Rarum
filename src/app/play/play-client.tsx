@@ -16,7 +16,8 @@ import { PackArt } from "@/components/pack-art";
 import { AnimatedNumber, DifficultyDots, RarityMeter, TierBadge, tierVar, useTierLabel } from "@/components/bits";
 import { RunSummary } from "@/components/run-summary";
 import { SceneOverride } from "@/components/scene";
-import { StageToast, WealthBadge, WealthRail } from "@/components/wealth-hud";
+import { CashPop, RunCashBadge } from "@/components/wealth-hud";
+import { cashForAnswer } from "@/lib/game/economy";
 
 interface RunMeta {
   mode: PlayMode;
@@ -60,6 +61,8 @@ export function PlayClient() {
   const [payload, setPayload] = React.useState<QuestionPayload | null>(null);
   const [result, setResult] = React.useState<AnswerResult | null>(null);
   const [totals, setTotals] = React.useState({ total: 0, answered: 0 });
+  const [runCash, setRunCash] = React.useState(0);
+  const [lastCash, setLastCash] = React.useState<{ amount: number; key: number } | null>(null);
   const [attempt, setAttempt] = React.useState<AttemptRecord | null>(null);
   const [input, setInput] = React.useState("");
   const [resumed, setResumed] = React.useState(false);
@@ -109,6 +112,7 @@ export function PlayClient() {
             persist(r.token);
             setMeta(r.meta);
             setTotals({ total: r.meta.points, answered: r.meta.answered });
+            setRunCash(Math.round(r.meta.points * 5 * (1 + (app.economy.level.level - 1) * 0.1)));
             if (r.done) {
               await finish();
               return;
@@ -166,6 +170,11 @@ export function PlayClient() {
       const r = await api<{ token: string; result: AnswerResult; totals: { total: number; max: number; answered: number; done: boolean } }>("/api/run/answer", { json: { token: tokenRef.current, input: value } });
       persist(r.token);
       setResult(r.result);
+      if (r.result.status === "accepted") {
+        const earned = cashForAnswer(r.result.tier, app.economy.level.level);
+        setRunCash((c) => c + earned);
+        setLastCash({ amount: earned, key: Date.now() });
+      }
       setTotals({ total: r.totals.total, answered: r.totals.answered });
       setLastDone(r.totals.done);
       setPhase("result");
@@ -223,8 +232,6 @@ export function PlayClient() {
   }, [phase, lastDone]);
 
   const pack = app.packById(payload?.question.packId ?? meta?.packId);
-  const perQ = Math.max(...app.settings.tiers.map((t) => t.points));
-  const runMax = meta?.total ? meta.total * perQ : Math.max(7, totals.answered + 1) * perQ;
 
   if (phase === "summary" && attempt) {
     return (
@@ -246,10 +253,9 @@ export function PlayClient() {
             {!meta.official && (meta.mode === "training" || meta.mode === "archive" || !!meta.practiceReason) && meta.mode !== "unlimited" && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
           </div>
         )}
-        <WealthBadge points={totals.total} max={runMax} />
+        <RunCashBadge cash={runCash} level={app.economy.level.level} />
       </div>
-      <WealthRail points={totals.total} max={runMax} />
-      <StageToast points={totals.total} max={runMax} />
+      <CashPop pop={lastCash} />
 
       {meta && meta.total ? <ProgressDots total={meta.total} answered={totals.answered} current={phase === "result" ? totals.answered - 1 : totals.answered} /> : null}
 
@@ -275,15 +281,15 @@ export function PlayClient() {
           )}
 
           {phase === "intro" && meta && (
-            <motion.div key="intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="glass overflow-hidden rounded-[28px] shadow-[var(--shadow-lift)]">
-              <div className="relative h-44 sm:h-56">
-                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : meta.mode === "ranked" ? "/images/backgrounds/downtown.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
-                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(18,14,34,1)] via-[rgba(18,14,34,0.2)] to-transparent" />
+            <motion.div key="intro" initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }} className="relative isolate flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[28px] border border-white/15 shadow-[var(--shadow-lift)] sm:min-h-[500px]">
+              <div className="kenburns absolute inset-0 -z-20">
+                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} variant="full" /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : meta.mode === "ranked" ? "/images/backgrounds/downtown.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
               </div>
-              <div className="-mt-10 px-6 pb-8 text-center sm:px-10">
-                <p className="text-sunset text-xs font-bold uppercase tracking-[0.24em]">{meta.subtitle}</p>
-                <h1 className="font-display mt-2 text-5xl text-white sm:text-6xl">{resumed ? "Weiter geht's" : meta.title}</h1>
-                <p className="mx-auto mt-3 max-w-md font-num text-sm uppercase tracking-[0.2em] text-white/70">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(10,6,20,0.97)] from-10% via-[rgba(10,6,20,0.72)] via-55% to-[rgba(10,6,20,0.05)]" />
+              <div className="px-6 pb-8 pt-24 text-center sm:px-10">
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--peach)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{meta.subtitle}</p>
+                <h1 className="font-display title-chroma mt-2 text-6xl leading-[0.9] text-white sm:text-7xl">{resumed ? "Weiter geht's" : meta.title}</h1>
+                <p className="mx-auto mt-3 max-w-md font-num text-sm uppercase tracking-[0.2em] text-white/75">
                   {meta.total ? `${meta.total} Fragen` : "Endlos"} · {app.settings.timeLimitSeconds} Sek.
                 </p>
                 {meta.practiceReason === "already_played" && <Notice icon={Repeat2}>Heute schon gespielt – das ist eine Trainingsrunde.</Notice>}
@@ -521,20 +527,6 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
             </div>
           )}
 
-          {result.examples.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-fg-subtle">{ok ? "Andere gültige Antworten" : "Gültig wären z. B."}</p>
-              <div className="flex flex-wrap gap-2">
-                {result.examples.map((e) => (
-                  <span key={e.text} className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-sm text-white">
-                    <span className="size-1.5 rounded-full" style={{ background: tierVar(e.tier) }} />
-                    {e.text}
-                    <span className="text-xs text-fg-subtle">{tierLabel(e.tier)}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
         </div>
       </div>

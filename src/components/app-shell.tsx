@@ -3,9 +3,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Archive, CalendarDays, Crown, Info, Infinity as InfinityIcon, LayoutGrid, Menu, Settings2, Swords, Trophy, User, Users, X } from "lucide-react";
+import { Archive, CalendarDays, Crown, Info, Infinity as InfinityIcon, LayoutGrid, Menu, Settings2, ShoppingBag, Swords, Trophy, User, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { cashOf, formatCash } from "@/lib/game/wealth";
+import { formatCash } from "@/lib/game/wealth";
 import { useApp } from "./providers";
 import { AvatarBubble, Logo } from "./bits";
 import { SceneBackground, SceneProvider } from "./scene";
@@ -25,7 +25,8 @@ export const MENU = [
   {
     title: "Du",
     items: [
-      { href: "/profil", label: "Mein NNAXOS", hint: "Vermögen, Serie, Abzeichen", icon: User },
+      { href: "/shop", label: "Shop", hint: "Kauf dir dein Imperium", icon: ShoppingBag },
+      { href: "/profil", label: "Mein NNAXOS", hint: "Level, Besitz, Abzeichen", icon: User },
       { href: "/rangliste", label: "Rangliste", hint: "Tag · Woche · Allzeit", icon: Trophy },
       { href: "/profil#freunde", match: "/__friends", label: "Freunde", hint: "Einladen & vergleichen", icon: Users },
     ],
@@ -45,12 +46,12 @@ function isActive(path: string, href: string, match?: string) {
 }
 
 function WealthPill() {
-  const { stats, attemptsLoaded, level } = useApp();
+  const { wallet, attemptsLoaded, economy } = useApp();
   return (
-    <Link href="/profil" className="hud group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm transition-colors hover:border-white/30" title="Dein Vermögen">
+    <Link href="/shop" className="hud group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm transition-colors hover:border-white/30" title="Kontostand · Shop">
       <span className="bg-sunset grid size-7 place-items-center rounded-full text-[13px] font-black text-white shadow-[0_0_18px_-4px_var(--sunset-pink)]">$</span>
-      <span className="font-num font-semibold tabular-nums text-white">{attemptsLoaded ? formatCash(cashOf(stats.totalPoints)) : "–"}</span>
-      <span className="hidden text-[11px] font-bold uppercase tracking-[0.16em] text-white/55 sm:inline">{level.current.name}</span>
+      <span className="font-num font-semibold tabular-nums text-white">{attemptsLoaded ? formatCash(wallet.balance) : "–"}</span>
+      <span className="hidden rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/80 sm:inline">Lvl {economy.level.level}</span>
     </Link>
   );
 }
@@ -129,7 +130,7 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
                   </span>
                 </Link>
               ) : accountsEnabled ? (
-                <Link href="/login" onClick={onClose} className="btn-sunset block rounded-xl px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em]">Anmelden &amp; Fortschritt sichern</Link>
+                <Link href="/login" onClick={onClose} className="btn-sunset block rounded-xl px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em]">Spielerkonto erstellen</Link>
               ) : (
                 <p className="text-xs leading-relaxed text-white/50">Demo-Modus: Dein Fortschritt wird auf diesem Gerät gespeichert. Komplett kostenlos, ohne Werbung.</p>
               )}

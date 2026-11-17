@@ -8,6 +8,6 @@ export const GET = handle(async () => {
   const user = await getSessionUser();
   return json({
     accountsEnabled: isSupabaseConfigured(),
-    user: user ? { username: user.username, avatar: user.avatar, role: user.role, inviteCode: user.inviteCode, email: user.email } : null,
+    user: user ? { username: user.username, avatar: user.avatar, role: user.role, inviteCode: user.inviteCode, email: user.email?.endsWith(".invalid") ? null : user.email } : null,
   });
 });
