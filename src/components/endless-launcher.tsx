@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Crown, Flame, Infinity as InfinityIcon, Leaf, Shuffle } from "lucide-react";
 import { useApp } from "./providers";
 import { cn } from "@/lib/utils";
+import { MONETIZATION } from "@/lib/monetization";
 
 const LEVELS = [
   { id: "leicht", label: "Leicht", icon: Leaf, tone: "from-[#2fbf8f] to-[#2fa9d6]" },
@@ -29,7 +30,7 @@ export function EndlessLauncher({ href, className }: { href: string; className?:
         ))}
       </div>
       <p className="flex items-center gap-2 text-xs text-white/60">
-        {premium.active ? <><Crown className="size-3.5 text-[#d9c2ff]" />Premium: bis zu 60 Fragen am Stück</> : <>10 Fragen am Stück · <Link href="/premium" className="font-semibold text-[#d9c2ff] hover:text-white">mit Premium ohne Pause</Link></>}
+        {!MONETIZATION ? <>Bis zu 60 Fragen am Stück</> : premium.active ? <><Crown className="size-3.5 text-[#d9c2ff]" />Premium: bis zu 60 Fragen am Stück</> : <>10 Fragen am Stück · <Link href="/premium" className="font-semibold text-[#d9c2ff] hover:text-white">mit Premium ohne Pause</Link></>}
       </p>
     </div>
   );

@@ -13,6 +13,7 @@ import { SHOP, canBuy } from "@/lib/game/economy";
 import { divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { daysBetween } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { MONETIZATION } from "@/lib/monetization";
 
 /* ------------------------------------------------------------------
    Hauptmenü – ein Bildschirm, ein Ziel: spielen.
@@ -161,7 +162,7 @@ function HeroPlayer() {
 function ShopTeaser() {
   const { economy, purchases, premium, character, owns } = useApp();
   // zuerst, was als Nächstes erreichbar ist
-  const items = SHOP.filter((i) => i.price > 0 && !i.premium && owns(i.id) < (i.stack ?? 1))
+  const items = SHOP.filter((i) => i.price > 0 && (!i.premium || !MONETIZATION) && owns(i.id) < (i.stack ?? 1))
     .sort((a, b) => Number(economy.level.level < a.minLevel) - Number(economy.level.level < b.minLevel) || a.price - b.price)
     .slice(0, 12);
   return (

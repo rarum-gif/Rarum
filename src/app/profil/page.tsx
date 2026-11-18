@@ -16,6 +16,7 @@ import { clearLocalAttempts, loadLocalAttempts } from "@/lib/client/local";
 import { formatDateDe } from "@/lib/time";
 import { formatCash } from "@/lib/game/wealth";
 import { CATALOG } from "@/lib/game/catalog";
+import { MONETIZATION } from "@/lib/monetization";
 import { DIVISIONS, divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { CharacterArt } from "@/components/character";
 import { ItemArt } from "@/components/world/item-art";
@@ -169,7 +170,7 @@ function ProfileInner() {
             <h1 className="font-display text-6xl text-white sm:text-7xl">{profile.name}</h1>
             <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Level {level.current.level} · {level.current.name}</span>
             <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#140d24]" style={{ background: rankDiv.division.color }}>{rankDiv.division.name}</span>
-            {premium.active && <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white"><Crown className="size-3.5" />Premium</span>}
+            {MONETIZATION && premium.active && <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white"><Crown className="size-3.5" />Premium</span>}
           </div>
           <div className="mt-3 max-w-md">
             <Progress value={level.progress} />

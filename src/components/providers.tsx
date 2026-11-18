@@ -5,6 +5,7 @@ import { computeStats, type UserStats } from "@/lib/game/stats";
 import { canBuy, computeEconomy, ownedCount, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
 import { browserSupabase } from "@/lib/client/supabase";
+import { MONETIZATION } from "@/lib/monetization";
 import { clearLocalPurchases, loadGuestProfile, loadLocal, loadLocalAttempts, loadLocalPurchases, replaceLocalAttempts, saveGuestProfile, saveLocal, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
 import { presetOf, validateCharacter, type Character } from "@/lib/game/character";
 import { EMPTY_ESTATE, plotSize, validateEstate, type Estate } from "@/lib/game/estate";
@@ -222,7 +223,7 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
     return { current: { level: l.level, name: l.title }, next: { level: l.level + 1, name: `Level ${l.level + 1}` }, toNext: l.toNext, progress: l.progress };
   }, [economy]);
   const premiumUntil = user ? user.premiumUntil ?? null : localWorld?.premium?.until ?? null;
-  const premium = React.useMemo(() => ({ active: !!premiumUntil && new Date(premiumUntil).getTime() > Date.now(), until: premiumUntil }), [premiumUntil]);
+  const premium = React.useMemo(() => ({ active: !MONETIZATION || (!!premiumUntil && new Date(premiumUntil).getTime() > Date.now()), until: premiumUntil }), [premiumUntil]);
   const buy = React.useCallback(async (itemId: string) => {
     const item = shopItem(itemId);
     if (!item) return "Unbekannter Artikel.";

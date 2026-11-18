@@ -1,6 +1,7 @@
 import type { AttemptRecord, TierId } from "@/lib/types";
 import { CATALOG, FREE_ITEMS, catalogItem, type CatalogItem } from "./catalog";
 import { seasonHistory, type SeasonResult } from "./ranked";
+import { MONETIZATION } from "@/lib/monetization";
 
 /**
  * Spielwirtschaft
@@ -155,7 +156,7 @@ export function walletOf(economy: Economy, purchases: Purchase[]) {
 export function canBuy(item: ShopItem, economy: Economy, purchases: Purchase[], premium = false): string | null {
   const max = item.stack ?? 1;
   if (ownedCount(purchases, item.id) >= max) return max > 1 ? `Maximal ${max} Stück.` : "Gehört dir schon.";
-  if (item.premium && !premium) return "Nur mit Premium.";
+  if (item.premium && !premium && MONETIZATION) return "Nur mit Premium.";
   if (economy.level.level < item.minLevel) return `Ab Level ${item.minLevel}.`;
   if (walletOf(economy, purchases).balance < item.price) return "Nicht genug Geld.";
   return null;

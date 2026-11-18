@@ -157,7 +157,8 @@ describe("Spielwelt: Shop, Figur, Grundstück, Weltkarte", () => {
     expect(canBuy(palm, eco, buys.slice(0, 3))).toBeNull();
     expect(canBuy(palm, eco, buys)).toMatch(/Maximal/);
     const neon = SHOP.find((i) => i.id === "neonpalme")!;
-    expect(canBuy(neon, { ...eco, level: { ...eco.level, level: 10 } }, [])).toBe("Nur mit Premium.");
+    // Bezahlfunktionen sind standardmässig aus: Premium-Gegenstände sind für alle kaufbar
+    expect(canBuy(neon, { ...eco, level: { ...eco.level, level: 10 } }, [])).toBeNull();
     expect(canBuy(neon, { ...eco, level: { ...eco.level, level: 10 } }, [], true)).toBeNull();
     expect(ownedCount([], "tee-weiss")).toBe(1);
   });

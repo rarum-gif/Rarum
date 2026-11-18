@@ -1,6 +1,7 @@
 import "server-only";
 import type { SessionUser } from "./supabase";
 import { sign, verify } from "./tokens";
+import { MONETIZATION } from "@/lib/monetization";
 
 /**
  * Premium-Berechtigung
@@ -33,6 +34,7 @@ export function premiumUntil(user: SessionUser | null, guestToken?: string | nul
 }
 
 export function isPremium(user: SessionUser | null, guestToken?: string | null, now = new Date()): boolean {
+  if (!MONETIZATION) return true; // alles kostenlos
   const until = premiumUntil(user, guestToken);
   return !!until && new Date(until).getTime() > now.getTime();
 }

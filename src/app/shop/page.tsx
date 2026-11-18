@@ -11,6 +11,7 @@ import { CATALOG, CATEGORIES, type CatalogItem, type Category } from "@/lib/game
 import { canBuy, cashMultiplier, TIER_CASH } from "@/lib/game/economy";
 import { formatCash } from "@/lib/game/wealth";
 import { cn } from "@/lib/utils";
+import { MONETIZATION } from "@/lib/monetization";
 
 type Filter = "alle" | "kaufbar" | "besitz";
 
@@ -92,12 +93,12 @@ export default function ShopPage() {
             const full = n >= max;
             return (
               <motion.article key={item.id} layout initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.25 }}
-                className={cn("group relative flex flex-col overflow-hidden rounded-[22px] border bg-[rgba(12,8,22,0.62)] backdrop-blur-md transition-colors", n > 0 ? "border-[var(--gold)]/50" : item.premium ? "border-[#b98cff]/45" : "border-white/12 hover:border-white/30")}>
+                className={cn("group relative flex flex-col overflow-hidden rounded-[22px] border bg-[rgba(12,8,22,0.62)] backdrop-blur-md transition-colors", n > 0 ? "border-[var(--gold)]/50" : MONETIZATION && item.premium ? "border-[#b98cff]/45" : "border-white/12 hover:border-white/30")}>
                 <div className={cn("relative flex h-36 items-end justify-center bg-[radial-gradient(circle_at_50%_70%,rgba(255,255,255,0.10),transparent_65%)] px-3 pt-3 transition-transform duration-500 group-hover:-translate-y-1", locked && "opacity-70 saturate-50")}>
                   <ItemArt item={item} character={character} size={130} />
                 </div>
                 <div className="absolute left-2.5 top-2.5 flex gap-1">
-                  {item.premium && <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em] text-white"><Crown className="size-3" />Premium</span>}
+                  {MONETIZATION && item.premium && <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.15em] text-white"><Crown className="size-3" />Premium</span>}
                   {locked && <span className="inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white"><Lock className="size-3" />Lvl {item.minLevel}</span>}
                 </div>
                 {n > 0 && <span className="absolute right-2.5 top-2.5 rounded-full bg-[var(--gold)] px-2 py-0.5 text-[10px] font-black text-black">{max > 1 ? `${n}/${max}` : "Dein"}</span>}
@@ -120,7 +121,7 @@ export default function ShopPage() {
           })}
         </AnimatePresence>
       </motion.div>
-      {!premium.active && (
+      {MONETIZATION && !premium.active && (
         <Link href="/premium" className="mt-8 flex items-center justify-between gap-3 rounded-[22px] border border-[#b98cff]/40 bg-gradient-to-r from-[rgba(138,79,255,0.25)] to-[rgba(255,46,136,0.18)] px-5 py-4 transition hover:-translate-y-0.5">
           <span className="flex items-center gap-3"><Crown className="size-6 text-[#d9c2ff]" /><span className="font-display text-3xl text-white">NNAXOS Premium</span></span>
           <span className="text-sm font-bold text-white/80">Ansehen ›</span>

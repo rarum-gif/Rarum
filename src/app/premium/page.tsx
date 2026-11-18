@@ -3,7 +3,8 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Check, Crown, Gift, Loader2, Minus, Sparkles } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { MONETIZATION } from "@/lib/monetization";
 import { useApp } from "@/components/providers";
 import { api } from "@/lib/client/api";
 import { ItemArt } from "@/components/world/item-art";
@@ -176,6 +177,12 @@ function PremiumInner() {
 }
 
 export default function PremiumPage() {
+  const router = useRouter();
+  // Bezahlfunktionen sind aus: alles ist kostenlos – Seite führt in den Shop
+  React.useEffect(() => {
+    if (!MONETIZATION) router.replace("/shop");
+  }, [router]);
+  if (!MONETIZATION) return null;
   return (
     <React.Suspense fallback={null}>
       <PremiumInner />

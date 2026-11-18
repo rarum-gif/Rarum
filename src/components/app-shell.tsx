@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Archive, CalendarDays, Crown, Globe2, Home, Info, Infinity as InfinityIcon, LayoutGrid, Menu, Settings2, Shirt, ShoppingBag, Swords, Trophy, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { MONETIZATION } from "@/lib/monetization";
 import { formatCash } from "@/lib/game/wealth";
 import { useApp } from "./providers";
 import { AvatarBubble, Logo } from "./bits";
@@ -44,7 +45,7 @@ export const MENU = [
   {
     title: "Mehr",
     items: [
-      { href: "/premium", label: "Premium", icon: Crown },
+      ...(MONETIZATION ? [{ href: "/premium", label: "Premium", icon: Crown }] : []),
       { href: "/info", label: "So funktioniert's", icon: Info },
       { href: "/admin", label: "Redaktion", icon: Settings2 },
     ],
