@@ -53,15 +53,14 @@ export default function PremiumPage() {
         )}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid max-w-3xl gap-4 md:grid-cols-2">
         {[
           { name: "Kostenlos", price: "0", per: "für immer", cta: null, highlight: false },
-          { name: "Premium", price: "3.90", per: "CHF pro Monat", cta: "Monat", highlight: false },
-          { name: "Premium Jahr", price: "29.90", per: "CHF pro Jahr · 36 % günstiger", cta: "Jahr", highlight: true },
+          { name: "Premium", price: "1.–", per: "CHF einmalig · für immer, kein Abo", cta: "einmalig", highlight: true },
         ].map((p, i) => (
           <motion.div key={p.name} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
             className={cn("relative flex flex-col rounded-[26px] border p-6", p.highlight ? "border-[#d9c2ff]/60 bg-gradient-to-b from-[rgba(138,79,255,0.28)] to-[rgba(12,8,22,0.8)]" : "border-white/12 bg-[rgba(12,8,22,0.6)]")}>
-            {p.highlight && <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white">Beliebt</span>}
+            {p.highlight && <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white">Einmal zahlen</span>}
             <p className="font-display text-3xl text-white">{p.name}</p>
             <p className="font-num mt-3 text-5xl font-semibold text-white">{p.price === "0" ? "Gratis" : p.price}</p>
             <p className="text-sm text-white/60">{p.per}</p>

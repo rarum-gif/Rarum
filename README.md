@@ -31,14 +31,14 @@ NNAXOS ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst
 
 ### Premium und Bezahlung
 
-Premium ist bewusst **kein Pay-to-win**: Geld, XP, Ranglisten und Fragen sind für alle gleich. Premium bringt längere Endlos-Runden, exklusive kosmetische Gegenstände, zwei Umgebungen und ein Profil-Abzeichen.
+Premium kostet **einmalig 1 CHF** (kein Abo) und gilt danach für immer. Premium ist bewusst **kein Pay-to-win**: Geld, XP, Ranglisten und Fragen sind für alle gleich. Premium bringt längere Endlos-Runden, exklusive kosmetische Gegenstände, zwei Umgebungen und ein Profil-Abzeichen.
 
 - **Heute:** Freischaltung über Codes (`PREMIUM_CODES`). Konten speichern `premium_until` in der Datenbank, Gäste erhalten ein vom Server signiertes Token.
 - **Echte Zahlungen:** Noch nicht aktiv, der Knopf auf `/premium` sagt das offen. Empfohlen ist Stripe Checkout. Dafür braucht es:
   - einen Stripe-Account,
   - die Secrets `STRIPE_SECRET_KEY` und `STRIPE_WEBHOOK_SECRET`,
   - eine Route, die eine Checkout-Session erstellt,
-  - einen Webhook (`checkout.session.completed`, `customer.subscription.*`), der `premium_until` per Service-Role setzt.
+  - einen Webhook (`checkout.session.completed`), der nach der Einmalzahlung `premium_until` per Service-Role weit in die Zukunft setzt (z. B. 2099), also lebenslang.
   
   Zahlungen setzen ein Spielerkonto mit E-Mail voraus, ausserdem eine Datenschutzerklärung und AGB.
 
