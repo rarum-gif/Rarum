@@ -5,7 +5,7 @@ import { computeStats, type UserStats } from "@/lib/game/stats";
 import { canBuy, computeEconomy, ownedCount, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
 import { loadGuestProfile, loadLocal, loadLocalAttempts, loadLocalPurchases, saveGuestProfile, saveLocal, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
-import { validateCharacter, type Character } from "@/lib/game/character";
+import { presetOf, validateCharacter, type Character } from "@/lib/game/character";
 import { EMPTY_ESTATE, plotSize, validateEstate, type Estate } from "@/lib/game/estate";
 import { DEFAULT_AVATAR, isValidAvatar } from "@/lib/avatars";
 
@@ -199,8 +199,8 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const hasOfficial = React.useCallback((setId: string | null | undefined) => (setId ? attempts.find((a) => a.official && a.setId === setId) : undefined), [attempts]);
 
   const profile = React.useMemo(
-    () => (user ? { name: user.username, avatar: user.avatar, guest: false } : { name: guest?.name || "Gast", avatar: guest?.avatar || DEFAULT_AVATAR, guest: true }),
-    [user, guest],
+    () => (user ? { name: user.username, avatar: user.avatar, guest: false } : { name: guest?.name || presetOf(String((localWorld?.character as Character | null)?.preset ?? ""))?.name || "Gast", avatar: guest?.avatar || DEFAULT_AVATAR, guest: true }),
+    [user, guest, localWorld],
   );
   const saveProfile = React.useCallback(async ({ name, avatar }: { name: string; avatar: string }) => {
     const n = name.trim();
