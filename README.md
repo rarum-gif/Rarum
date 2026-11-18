@@ -34,13 +34,14 @@ NNAXOS ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst
 Premium kostet **einmalig 1 CHF** (kein Abo) und gilt danach für immer. Premium ist bewusst **kein Pay-to-win**: Geld, XP, Ranglisten und Fragen sind für alle gleich. Premium bringt längere Endlos-Runden, exklusive kosmetische Gegenstände, zwei Umgebungen und ein Profil-Abzeichen.
 
 - **Heute:** Freischaltung über Codes (`PREMIUM_CODES`). Konten speichern `premium_until` in der Datenbank, Gäste erhalten ein vom Server signiertes Token.
-- **Echte Zahlungen:** Noch nicht aktiv, der Knopf auf `/premium` sagt das offen. Empfohlen ist Stripe Checkout. Dafür braucht es:
-  - einen Stripe-Account,
-  - die Secrets `STRIPE_SECRET_KEY` und `STRIPE_WEBHOOK_SECRET`,
-  - eine Route, die eine Checkout-Session erstellt,
-  - einen Webhook (`checkout.session.completed`), der nach der Einmalzahlung `premium_until` per Service-Role weit in die Zukunft setzt (z. B. 2099), also lebenslang.
-  
-  Zahlungen setzen ein Spielerkonto mit E-Mail voraus, ausserdem eine Datenschutzerklärung und AGB.
+- **Echte Zahlungen (Stripe Checkout):** Sind eingebaut und werden aktiv, sobald `STRIPE_SECRET_KEY` und `STRIPE_WEBHOOK_SECRET` gesetzt sind. Ablauf:
+  1. Spieler mit Konto klickt auf `/premium` → `POST /api/premium/checkout`.
+  2. Er wird zur von Stripe gehosteten Bezahlseite weitergeleitet. Die Zahlungsarten wählt Stripe dynamisch, verwaltet werden sie im Dashboard.
+  3. Stripe schickt einen signierten Webhook an `POST /api/stripe/webhook` (`checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`).
+  4. Der Server setzt `premium_until` auf 2099. Die Freischaltung ist idempotent über die Tabelle `premium_payments`.
+  5. Die Rückkehrseite prüft die Session zusätzlich direkt bei Stripe (`/api/premium/confirm`), damit Premium sofort sichtbar ist.
+  - Migration `20261121000000_premium_payments.sql` ausführen.
+  - Vor dem Live-Gang: Datenschutzerklärung und AGB, Stripe-Go-Live-Checkliste.
 
 ## Designsystem
 

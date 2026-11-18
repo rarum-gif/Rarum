@@ -3,7 +3,9 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Check, Crown, Gift, Loader2, Minus, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useApp } from "@/components/providers";
+import { api } from "@/lib/client/api";
 import { ItemArt } from "@/components/world/item-art";
 import { Input } from "@/components/ui/input";
 import { SceneOverride } from "@/components/scene";
@@ -25,8 +27,46 @@ const ROWS: [string, boolean | string, boolean | string][] = [
   ["Premium-Abzeichen im Profil", false, true],
 ];
 
-export default function PremiumPage() {
-  const { premium, redeemPremium, character } = useApp();
+function PremiumInner() {
+  const { premium, redeemPremium, character, paymentsEnabled, user, accountsEnabled, refreshSession } = useApp();
+  const params = useSearchParams();
+  const [payState, setPayState] = React.useState<"idle" | "busy" | "checking" | "done" | string>("idle");
+  const lifetime = !!premium.until && new Date(premium.until).getFullYear() >= 2099;
+
+  // Rückkehr von Stripe: Zahlung bestätigen (der Webhook schaltet zusätzlich frei)
+  React.useEffect(() => {
+    const sessionId = params.get("session_id");
+    if (params.get("kauf") !== "ok" || !sessionId || !user) return;
+    let alive = true;
+    setPayState("checking");
+    (async () => {
+      for (let i = 0; i < 6 && alive; i++) {
+        try {
+          const r = await api<{ status: string }>("/api/premium/confirm", { json: { sessionId } });
+          if (r.status === "granted" || r.status === "already") {
+            await refreshSession();
+            if (alive) setPayState("done");
+            return;
+          }
+        } catch {
+          /* gleich nochmal */
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      if (alive) setPayState("Zahlung noch nicht bestätigt – das kann einen Moment dauern. Lade die Seite gleich neu.");
+    })();
+    return () => { alive = false; };
+  }, [params, user, refreshSession]);
+
+  const buyNow = async () => {
+    setPayState("busy");
+    try {
+      const r = await api<{ url: string }>("/api/premium/checkout", { json: {} });
+      window.location.href = r.url;
+    } catch (e) {
+      setPayState(e instanceof Error ? e.message : "Die Bezahlseite konnte nicht geöffnet werden.");
+    }
+  };
   const [code, setCode] = React.useState("");
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -48,8 +88,12 @@ export default function PremiumPage() {
         <motion.div className="pointer-events-none absolute -right-20 -top-20 size-80 rounded-full bg-[#ff2e88]/25 blur-3xl" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity }} />
         <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.35em] text-[#d9c2ff]"><Crown className="size-4" />NNAXOS Premium</p>
         <h1 className="font-display mt-2 max-w-3xl text-6xl leading-[0.9] text-white sm:text-8xl">Mehr Stil. Gleiche Chancen.</h1>
+        {payState === "checking" && <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white"><Loader2 className="size-4 animate-spin" />Zahlung wird bestätigt …</p>}
+        {payState === "done" && <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--success)]/20 px-4 py-2 text-sm font-bold text-[var(--success)]"><Check className="size-4" />Danke! Premium ist für immer freigeschaltet.</p>}
+        {params.get("kauf") === "abbruch" && payState === "idle" && <p className="mt-5 text-sm font-semibold text-white/70">Zahlung abgebrochen – es wurde nichts belastet.</p>}
+        {!["idle", "busy", "checking", "done"].includes(payState) && <p className="mt-5 text-sm font-semibold text-[var(--danger)]">{payState}</p>}
         {premium.active && (
-          <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--success)]/20 px-4 py-2 text-sm font-bold text-[var(--success)]"><Check className="size-4" />Aktiv bis {new Date(premium.until!).toLocaleDateString("de-CH")}</p>
+          <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--success)]/20 px-4 py-2 text-sm font-bold text-[var(--success)]"><Check className="size-4" />{lifetime ? "Premium für immer" : `Aktiv bis ${new Date(premium.until!).toLocaleDateString("de-CH")}`}</p>
         )}
       </section>
 
@@ -66,9 +110,17 @@ export default function PremiumPage() {
             <p className="text-sm text-white/60">{p.per}</p>
             <div className="mt-6">
               {p.cta ? (
-                <button disabled className="w-full cursor-not-allowed rounded-xl border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white/55" title="Die Bezahlung wird nach dem Sicherheits-Check freigeschaltet">
-                  Bezahlung folgt
-                </button>
+                lifetime ? (
+                  <p className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--success)]/20 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--success)]"><Check className="size-4" />Für immer freigeschaltet</p>
+                ) : !paymentsEnabled ? (
+                  <button disabled className="w-full cursor-not-allowed rounded-xl border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white/55">Bezahlung folgt</button>
+                ) : !user ? (
+                  <Link href="/login" className="block w-full rounded-xl border border-white/20 px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.16em] text-white hover:bg-white/10">{accountsEnabled ? "Erst anmelden" : "Konten nicht aktiv"}</Link>
+                ) : (
+                  <button onClick={buyNow} disabled={payState === "busy" || payState === "checking"} className="btn-sunset flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-[0.16em]">
+                    {payState === "busy" ? <Loader2 className="size-4 animate-spin" /> : <Crown className="size-4" />}Für 1 CHF freischalten
+                  </button>
+                )
               ) : (
                 <Link href="/" className="block w-full rounded-xl bg-white/10 px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.16em] text-white hover:bg-white/15">Spielen</Link>
               )}
@@ -120,5 +172,13 @@ export default function PremiumPage() {
         {msg && <p className={cn("mt-3 text-sm font-semibold", msg.ok ? "text-[var(--success)]" : "text-[var(--danger)]")}>{msg.text}</p>}
       </section>
     </div>
+  );
+}
+
+export default function PremiumPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <PremiumInner />
+    </React.Suspense>
   );
 }

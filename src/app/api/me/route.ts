@@ -1,6 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/config";
 import { handle, json } from "@/lib/server/http";
 import { getSessionUser } from "@/lib/server/supabase";
+import { paymentsEnabled } from "@/lib/server/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,6 @@ export const GET = handle(async () => {
   return json({
     accountsEnabled: isSupabaseConfigured(),
     user: user ? { username: user.username, avatar: user.avatar, role: user.role, inviteCode: user.inviteCode, email: user.email?.endsWith(".invalid") ? null : user.email, character: user.character, estate: user.estate, premiumUntil: user.premiumUntil } : null,
-    paymentsEnabled: false,
+    paymentsEnabled: paymentsEnabled(),
   });
 });

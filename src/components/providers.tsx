@@ -77,6 +77,8 @@ interface AppState {
   owns: (id: string) => number;
   premium: { active: boolean; until: string | null };
   redeemPremium: (code: string) => Promise<string | null>;
+  /** Echte Zahlungen (Stripe) eingerichtet */
+  paymentsEnabled: boolean;
   hasOfficial: (setId: string | null | undefined) => AttemptRecord | undefined;
 }
 
@@ -90,6 +92,7 @@ export function useApp() {
 
 export function AppProvider({ children, packs, settings, accountsEnabled, initialOverview }: { children: React.ReactNode; packs: ThemePack[]; settings: GameSettings; accountsEnabled: boolean; initialOverview: Overview | null }) {
   const [user, setUser] = React.useState<SessionInfo | null>(null);
+  const [paymentsEnabled, setPaymentsEnabled] = React.useState(false);
   const [sessionLoaded, setSessionLoaded] = React.useState(!accountsEnabled);
   const [attempts, setAttempts] = React.useState<AttemptRecord[]>([]);
   const [attemptsLoaded, setAttemptsLoaded] = React.useState(false);
@@ -118,8 +121,9 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const refreshSession = React.useCallback(async () => {
     if (!accountsEnabled) return;
     try {
-      const me = await api<{ user: SessionInfo | null }>("/api/me");
+      const me = await api<{ user: SessionInfo | null; paymentsEnabled?: boolean }>("/api/me");
       setUser(me.user);
+      setPaymentsEnabled(!!me.paymentsEnabled);
     } finally {
       setSessionLoaded(true);
     }
@@ -292,7 +296,7 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const value: AppState = {
     packs, settings, accountsEnabled, user, sessionLoaded, attempts, attemptsLoaded, storage: user ? "account" : "local",
     overview, today, serverOffset, stats, level, economy, purchases, wallet, buy, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial, profile, saveProfile,
-    character, worldLoaded, saveCharacter, estate, plot, saveEstate, owns, premium, redeemPremium,
+    character, worldLoaded, saveCharacter, estate, plot, saveEstate, owns, premium, redeemPremium, paymentsEnabled,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

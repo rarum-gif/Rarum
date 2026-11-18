@@ -57,6 +57,7 @@ describe("Supabase-Migration (PostgreSQL via PGlite)", () => {
     await expect(db.exec(`update public.profiles set estate = '{}'::jsonb where id='${u1}'`)).rejects.toThrow(/permission denied/);
     await expect(db.exec(`insert into public.purchases (user_id, item_id, price) values ('${u1}','yacht',0)`)).rejects.toThrow(/permission denied/);
     await expect(db.exec(`insert into public.premium_redemptions (user_id, code, days) values ('${u1}','X',365)`)).rejects.toThrow(/permission denied/);
+    await expect(db.exec(`insert into public.premium_payments (session_id, user_id, amount, currency) values ('cs_x','${u1}',100,'chf')`)).rejects.toThrow(/permission denied/);
     await db.exec(`update public.profiles set avatar='owl' where id='${u1}'`); // erlaubt
     await expect(db.exec(`insert into public.challenge_attempts (user_id, mode) values ('${u1}','daily')`)).rejects.toThrow(/row-level security/);
     await expect(db.exec(`select public.admin_save_question('{}'::jsonb)`)).rejects.toThrow(/permission denied/);
