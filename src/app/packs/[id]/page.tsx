@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResetCountdown, StatTile } from "@/components/bits";
 import { SceneOverride } from "@/components/scene";
+import { EndlessLauncher } from "@/components/endless-launcher";
 import { maxPointsPerQuestion } from "@/lib/game/scoring";
 import { formatDateDe } from "@/lib/time";
 import { fmt } from "@/lib/utils";
@@ -67,11 +68,11 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-[var(--peach)]" />Training</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="size-5 text-[var(--peach)]" />Endlos spielen</CardTitle></CardHeader>
           <CardContent>
-            <Button asChild variant="secondary"><Link href={`/play?mode=training&pack=${pack.id}`}>Training starten</Link></Button>
+            <EndlessLauncher href={`/play?mode=training&pack=${pack.id}`} />
           </CardContent>
         </Card>
         <Card>

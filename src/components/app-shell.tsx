@@ -3,12 +3,15 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Archive, CalendarDays, Crown, Info, Infinity as InfinityIcon, LayoutGrid, Menu, Settings2, ShoppingBag, Swords, Trophy, User, Users, X } from "lucide-react";
+import { Archive, CalendarDays, Crown, Globe2, Home, Info, Infinity as InfinityIcon, LayoutGrid, Menu, Settings2, Shirt, ShoppingBag, Swords, Trophy, User, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { formatCash } from "@/lib/game/wealth";
 import { useApp } from "./providers";
 import { AvatarBubble, Logo } from "./bits";
+import { CharacterBadge } from "./character";
 import { SceneBackground, SceneProvider } from "./scene";
+import { PalmSilhouettes } from "./palms";
 
 /** Menü wie bei einem Spiel: Spielen · Du · Mehr */
 export const MENU = [
@@ -16,29 +19,43 @@ export const MENU = [
     title: "Spielen",
     items: [
       { href: "/play?mode=daily", match: "/daily", label: "Daily Challenge", icon: CalendarDays },
-      { href: "/ranked", label: "Ranked", icon: Swords, badge: "Neu" },
+      { href: "/ranked", label: "Ranked", icon: Swords },
+      { href: "/weltkarte", label: "Weltkarte", icon: Globe2, badge: "Neu" },
+      { href: "/packs", label: "Themen-Packs", icon: LayoutGrid },
       { href: "/unlimited", label: "Unlimited", icon: InfinityIcon },
       { href: "/archiv", label: "Archiv", icon: Archive },
-      { href: "/packs", label: "Themen-Packs", icon: LayoutGrid },
+    ],
+  },
+  {
+    title: "Deine Welt",
+    items: [
+      { href: "/grundstueck", label: "Grundstück", icon: Home },
+      { href: "/figur", label: "Figur", icon: Shirt },
+      { href: "/shop", label: "Shop", icon: ShoppingBag },
     ],
   },
   {
     title: "Du",
     items: [
-      { href: "/shop", label: "Shop", icon: ShoppingBag },
-      { href: "/profil", label: "Mein NNAXOS", icon: User },
+      { href: "/profil", label: "Profil", icon: User },
       { href: "/rangliste", label: "Rangliste", icon: Trophy },
-      { href: "/profil#freunde", match: "/__friends", label: "Freunde", icon: Users },
     ],
   },
   {
     title: "Mehr",
     items: [
+      { href: "/premium", label: "Premium", icon: Crown },
       { href: "/info", label: "So funktioniert's", icon: Info },
       { href: "/admin", label: "Redaktion", icon: Settings2 },
     ],
   },
 ] as const;
+
+/** Spielfigur als Kopf-Ausschnitt – vor der Wahl der einfache Avatar */
+export function PlayerAvatar({ size = 38 }: { size?: number }) {
+  const { character, profile } = useApp();
+  return character ? <CharacterBadge c={character} size={size} /> : <AvatarBubble id={profile.avatar} size={size} />;
+}
 
 function isActive(path: string, href: string, match?: string) {
   const h = match ?? href.split("?")[0].split("#")[0];
@@ -122,7 +139,7 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
             <div className="border-t border-white/10 p-5">
               {user || !accountsEnabled ? (
                 <Link href="/profil" onClick={onClose} className="flex items-center gap-3">
-                  <AvatarBubble id={profile.avatar} size={40} />
+                  <PlayerAvatar size={40} />
                   <span className="block min-w-0 truncate font-semibold">{profile.name}</span>
                 </Link>
               ) : accountsEnabled ? (
@@ -168,7 +185,7 @@ function Sidebar() {
       </nav>
       <div className="border-t border-white/[0.07] p-3">
         <Link href="/profil" className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/[0.06]">
-          <AvatarBubble id={profile.avatar} size={40} />
+          <PlayerAvatar size={40} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-white">{profile.name}</span>
             <span className="font-num block text-xs text-white/55">Lvl {economy.level.level} · {attemptsLoaded ? formatCash(wallet.balance) : "–"}</span>
@@ -186,9 +203,10 @@ function Sidebar() {
 const QUICK = [
   { href: "/daily", label: "Daily" },
   { href: "/ranked", label: "Ranked" },
+  { href: "/weltkarte", label: "Weltkarte" },
   { href: "/packs", label: "Packs" },
-  { href: "/unlimited", label: "Unlimited" },
-  { href: "/archiv", label: "Archiv" },
+  { href: "/grundstueck", label: "Grundstück" },
+  { href: "/figur", label: "Figur" },
   { href: "/shop", label: "Shop" },
   { href: "/rangliste", label: "Rangliste" },
   { href: "/profil", label: "Profil" },
@@ -212,9 +230,15 @@ function SubNav() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname() ?? "/";
-  const { profile } = useApp();
+  const { worldLoaded, character } = useApp();
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const playing = path.startsWith("/play");
+  const playing = path.startsWith("/play") || path.startsWith("/start");
+
+  // Erster Besuch: zuerst eine Spielfigur wählen
+  React.useEffect(() => {
+    if (worldLoaded && !character && path === "/") router.replace("/start");
+  }, [worldLoaded, character, path, router]);
   const home = path === "/";
   const close = React.useCallback(() => setOpen(false), []);
 
@@ -224,6 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <SceneProvider>
       <div className="shell relative isolate min-h-dvh" data-side={playing ? "0" : "1"}>
         <SceneBackground />
+        {!playing && <PalmSilhouettes />}
         <div className="grain pointer-events-none fixed -inset-[10%] z-[1]" aria-hidden />
         {!playing && <Sidebar />}
         <div className="side-offset">
@@ -243,7 +268,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {!playing && <WealthPill />}
                 <span className="hidden sm:block lg:hidden"><Link href="/ranked" className="icon-btn" aria-label="Ranked" title="Ranked"><Crown className="size-5" /></Link></span>
                 <Link href="/profil" className="rounded-full" aria-label="Profil">
-                  <AvatarBubble id={profile.avatar} size={38} />
+                  <PlayerAvatar size={38} />
                 </Link>
               </div>
             </div>

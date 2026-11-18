@@ -276,3 +276,41 @@ header.side-offset { padding-left: var(--side); }
 .side-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .side-item-active { background: linear-gradient(90deg, rgba(255,46,136,0.24), rgba(255,122,61,0.06)); color: #fff; }
 .side-item-active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--sunset-gradient); }
+
+/* ---------- Lebendige Spielwelt (dezent, GPU-freundlich) ---------- */
+@keyframes sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(3deg); } }
+.sway { transform-box: fill-box; animation: sway 4.6s ease-in-out infinite; }
+.sway-slow { animation: sway 7s ease-in-out infinite; transform-box: fill-box; transform-origin: center top; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-0.6deg); } 50% { transform: translateY(2.5px) rotate(0.8deg); } }
+.bob { animation: bob 3.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes waves { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+.waves { animation: waves 5s ease-in-out infinite alternate; }
+@keyframes water { 0%, 100% { opacity: 1; } 50% { opacity: 0.86; } }
+.water { animation: water 3.4s ease-in-out infinite; }
+@keyframes shimmer-soft { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.4; } }
+.shimmer-soft { animation: shimmer-soft 3s ease-in-out infinite; }
+@keyframes bubble { 0% { transform: translateY(0); opacity: 0.9; } 100% { transform: translateY(-10px); opacity: 0; } }
+.bubble { animation: bubble 1.8s ease-out infinite; }
+@keyframes spray { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.5; } }
+.spray { animation: spray 1.4s ease-in-out infinite; }
+@keyframes flicker { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(0.94, 1.08); } 60% { transform: scale(1.05, 0.95); } }
+.flicker { animation: flicker 0.9s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes neon-flicker { 0%, 92%, 100% { opacity: 1; } 94% { opacity: 0.4; } 96% { opacity: 1; } 97% { opacity: 0.5; } }
+.neon-flicker { animation: neon-flicker 5s linear infinite; }
+@keyframes cloud { from { transform: translateX(0); } to { transform: translateX(160vw); } }
+.cloud { animation: cloud 90s linear infinite; }
+.cloud-2 { animation-duration: 140s; animation-delay: -40s; }
+.estate-item { transition: opacity .2s; }
+@media (prefers-reduced-motion: reduce) {
+  .sway, .sway-slow, .bob, .waves, .water, .shimmer-soft, .bubble, .spray, .flicker, .neon-flicker, .cloud { animation: none !important; }
+}
+@keyframes idle-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.idle-breathe { animation: idle-breathe 4.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .idle-breathe { animation: none; } }
+@keyframes ping-soft { 0% { transform: scale(0.6); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
+.ping { animation: ping-soft 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes draw-line { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+.draw-line { animation: draw-line 1.2s ease-out both; }
+@keyframes palm-crown { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(4deg); } }
+.palm-crown { animation: palm-crown 6.5s ease-in-out infinite; transform-box: fill-box; }
+@media (prefers-reduced-motion: reduce) { .palm-crown { animation: none; } }

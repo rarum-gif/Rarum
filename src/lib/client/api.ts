@@ -6,6 +6,17 @@ export class ApiError extends Error {
   }
 }
 
+/** Gäste: signiertes Premium-Token mitsenden (wird nur vom Server geprüft) */
+function premiumHeader(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem("rarum.v1.premium");
+    const t = raw ? (JSON.parse(raw) as { token?: string }).token : null;
+    return t ? { "x-nnaxos-premium": t } : {};
+  } catch {
+    return {};
+  }
+}
+
 export async function api<T>(url: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const { json, ...rest } = init ?? {};
   let res: Response;
@@ -13,7 +24,7 @@ export async function api<T>(url: string, init?: RequestInit & { json?: unknown 
     res = await fetch(url, {
       ...rest,
       method: rest.method ?? (json !== undefined ? "POST" : "GET"),
-      headers: { ...(json !== undefined ? { "Content-Type": "application/json" } : {}), ...(rest.headers ?? {}) },
+      headers: { ...(json !== undefined ? { "Content-Type": "application/json" } : {}), ...premiumHeader(), ...(rest.headers ?? {}) },
       body: json !== undefined ? JSON.stringify(json) : rest.body,
       cache: "no-store",
     });

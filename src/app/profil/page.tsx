@@ -11,14 +11,18 @@ import { Input, Label } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { AvatarBubble, AvatarIcon, StatTile, TierBadge } from "@/components/bits";
 import { AchievementMedal } from "@/components/achievement-medal";
-import { ACHIEVEMENTS, earnedAchievements } from "@/lib/game/stats";
+import { ACHIEVEMENTS, WORLD_ACHIEVEMENTS, earnedAchievements } from "@/lib/game/stats";
 import { AVATAR_COLORS, AVATAR_ICONS, avatarId, parseAvatar } from "@/lib/avatars";
 import { api, ApiError } from "@/lib/client/api";
-import { clearLocalAttempts, loadLocalAttempts, replaceLocalAttempts } from "@/lib/client/local";
+import { clearLocalAttempts, loadLocal, loadLocalAttempts, loadLocalPurchases, replaceLocalAttempts } from "@/lib/client/local";
 import { browserSupabase } from "@/lib/client/supabase";
 import { formatDateDe } from "@/lib/time";
 import { formatCash } from "@/lib/game/wealth";
-import { shopItem } from "@/lib/game/economy";
+import { CATALOG } from "@/lib/game/catalog";
+import { DIVISIONS, divisionFor, rankedFromAttempts, season } from "@/lib/game/ranked";
+import { CharacterArt } from "@/components/character";
+import { ItemArt } from "@/components/world/item-art";
+import { Crown } from "lucide-react";
 import { cn, fmt } from "@/lib/utils";
 
 function SyncCard() {
@@ -34,6 +38,19 @@ function SyncCard() {
       const list = loadLocalAttempts().filter((a) => a.receipt);
       const r = await api<{ imported: number; skipped: number; rejected: number }>("/api/me/import", { json: { attempts: list } });
       replaceLocalAttempts(loadLocalAttempts().filter((a) => !a.receipt));
+      // Gast-Käufe übernehmen – der Server prüft jeden einzeln gegen den Kontostand
+      let bought = 0;
+      for (const p of loadLocalPurchases()) {
+        try {
+          await api("/api/shop", { json: { itemId: p.itemId } });
+          bought++;
+        } catch {
+          /* nicht mehr leistbar oder schon vorhanden */
+        }
+      }
+      if (bought) await reloadAttempts();
+      const estate = loadLocal<unknown>("estate");
+      if (estate) await api("/api/me/estate", { method: "PUT", json: { estate } }).catch(() => null);
       setLocal(0);
       setMsg(`${r.imported} Ergebnisse übernommen${r.skipped ? `, ${r.skipped} übersprungen (bereits gewertet)` : ""}.`);
       setState("done");
@@ -133,10 +150,46 @@ function EditProfile({ open, onOpenChange }: { open: boolean; onOpenChange: (v: 
   );
 }
 
+/** Besitz: Fahrzeuge, Boote, Gebäude, Kleidung und Sammlerstücke */
+function Possessions() {
+  const { owns, character } = useApp();
+  const groups = [
+    { label: "Fahrzeuge & Boote", items: CATALOG.filter((i) => (i.category === "fahrzeuge" || i.category === "boote") && owns(i.id) > 0) },
+    { label: "Immobilien", items: CATALOG.filter((i) => (i.category === "gebaeude" || i.kind === "plot" || i.kind === "theme") && owns(i.id) > 0) },
+    { label: "Garderobe", items: CATALOG.filter((i) => i.kind === "wear" && i.price > 0 && owns(i.id) > 0) },
+    { label: "Sammlung", items: CATALOG.filter((i) => i.kind === "collect" && owns(i.id) > 0) },
+  ].filter((g) => g.items.length);
+  if (!groups.length) return null;
+  return (
+    <Card>
+      <CardHeader><CardTitle>Besitz</CardTitle></CardHeader>
+      <CardContent className="space-y-5">
+        {groups.map((g) => (
+          <div key={g.label}>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">{g.label}</p>
+            <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+              {g.items.map((it) => (
+                <div key={it.id} className="w-28 shrink-0 rounded-2xl border border-[var(--gold)]/30 bg-[radial-gradient(circle_at_50%_60%,rgba(242,193,78,0.12),rgba(255,255,255,0.02)_70%)] p-2 text-center" title={it.name}>
+                  <div className="flex h-20 items-end justify-center"><ItemArt item={it} character={character} size={80} /></div>
+                  <p className="mt-1 truncate text-[11px] font-semibold text-white">{it.name}{(it.stack ?? 1) > 1 ? ` ×${owns(it.id)}` : ""}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProfileInner() {
-  const { user, profile, accountsEnabled, stats, level, economy, wallet, purchases, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession } = useApp();
+  const { user, profile, accountsEnabled, stats, level, economy, wallet, attempts, packs, attemptsLoaded, packById, reloadAttempts, refreshSession, character, premium, today } = useApp();
+  const rankDiv = divisionFor(rankedFromAttempts(attempts, season(today).start).rp);
   const [edit, setEdit] = React.useState(false);
-  const earned = earnedAchievements(stats, attempts);
+  const { purchases, estate, plot } = useApp();
+  const worldInfo = { purchases, placed: estate.items.length, plot, seasonsPlayed: economy.seasons.filter((x) => x.matches >= 3).length, bestDivision: Math.max(-1, ...economy.seasons.filter((x) => x.matches >= 3).map((x) => DIVISIONS.findIndex((d) => d.id === x.division.id))), hasCharacter: !!character };
+  const earned = [...earnedAchievements(stats, attempts), ...WORLD_ACHIEVEMENTS.filter((a) => a.check(worldInfo, attempts)).map((a) => a.id)];
+  const allAchievements = [...ACHIEVEMENTS, ...WORLD_ACHIEVEMENTS];
   const records = [
     { label: "Beste Daily Challenge", value: stats.bestDaily ? `${stats.bestDaily.total} Pkt.` : "–", hint: stats.bestDaily?.date ? formatDateDe(stats.bestDaily.date) : undefined },
     { label: "Beste Unlimited-Runde", value: stats.bestUnlimited ? `${stats.bestUnlimited} Pkt.` : "–" },
@@ -169,29 +222,22 @@ function ProfileInner() {
         <img src="/images/profile/header.webp" alt="" className="kenburns absolute inset-0 -z-20 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(12,8,20,0.97)] via-[rgba(12,8,20,0.55)] to-[rgba(12,8,20,0.15)]" />
         <div className="flex flex-col gap-6 p-6 pt-32 sm:flex-row sm:items-end sm:p-10 sm:pt-44">
-        <div className="rounded-full p-1 bg-sunset glow-sunset"><AvatarBubble id={profile.avatar} size={96} className="ring-0" /></div>
+        {character ? (
+          <Link href="/figur" className="-mb-6 -mt-24 shrink-0 drop-shadow-[0_24px_40px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-1 sm:-mb-10"><CharacterArt c={character} size={190} /></Link>
+        ) : (
+          <div className="rounded-full p-1 bg-sunset glow-sunset"><AvatarBubble id={profile.avatar} size={96} className="ring-0" /></div>
+        )}
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-display text-6xl text-white sm:text-7xl">{profile.name}</h1>
             <span className="bg-sunset rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Level {level.current.level} · {level.current.name}</span>
+            <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#140d24]" style={{ background: rankDiv.division.color }}>{rankDiv.division.name}</span>
+            {premium.active && <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8a4fff] to-[#ff2e88] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white"><Crown className="size-3.5" />Premium</span>}
           </div>
           <div className="mt-3 max-w-md">
             <Progress value={level.progress} />
             <p className="mt-1.5 font-num text-xs text-white/70">{economy.xp} XP · noch {level.toNext} XP bis Level {level.current.level + 1}</p>
             <p className="font-num mt-3 text-4xl font-semibold text-white">{formatCash(wallet.balance, { compact: false })} <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-white/55">Kontostand</span></p>
-            {purchases.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {purchases.map((p) => {
-                  const it = shopItem(p.itemId);
-                  return it ? (
-                    <span key={p.itemId} className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/40 bg-black/40 py-1 pl-1 pr-3 text-xs font-semibold text-white">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/images/wealth/${it.image}.webp`} alt="" className="size-6 rounded-full object-cover" />{it.name}
-                    </span>
-                  ) : null;
-                })}
-              </div>
-            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -207,6 +253,8 @@ function ProfileInner() {
 
       <SyncCard />
 
+      <Possessions />
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile icon={Gem} label="Gesamtpunktzahl" value={fmt(stats.totalPoints)} />
         <StatTile icon={Flame} label="Aktuelle Serie" value={stats.streak.current} hint={`Längste Serie: ${stats.streak.longest}`} />
@@ -215,13 +263,13 @@ function ProfileInner() {
         <StatTile icon={Mountain} label="Beste Daily" value={stats.bestDaily?.total ?? "–"} />
         <StatTile icon={LayoutGrid} label="Gespielte Packs" value={`${stats.packsPlayed}/15`} />
         <StatTile icon={Sparkles} label="Gültige Antworten" value={stats.acceptedAnswers} hint={`von ${stats.answeredTotal}`} />
-        <StatTile icon={Trophy} label="Abzeichen" value={`${earned.length}/${ACHIEVEMENTS.length}`} />
+        <StatTile icon={Trophy} label="Abzeichen" value={`${earned.length}/${allAchievements.length}`} />
       </div>
 
       <Card>
         <CardHeader><CardTitle>Abzeichen</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {ACHIEVEMENTS.map((a) => {
+          {allAchievements.map((a) => {
             const has = earned.includes(a.id);
             return (
               <div key={a.id} className={cn("group flex flex-col items-center rounded-2xl border p-4 text-center transition-all hover:-translate-y-0.5", has ? "border-[rgba(242,193,78,0.35)] bg-[linear-gradient(180deg,rgba(242,193,78,0.10),rgba(255,255,255,0.02))]" : "border-white/8 bg-white/[0.03]")}>

@@ -8,7 +8,8 @@ import { AvatarBubble, PageHeader } from "@/components/bits";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SceneOverride } from "@/components/scene";
 import { api } from "@/lib/client/api";
-import { DIVISIONS, RANKED_PAR, RANKED_QUESTIONS, RANKED_START_RP, demoRivals, divisionFor, rankedDelta, rankedFromAttempts, season } from "@/lib/game/ranked";
+import { formatCash } from "@/lib/game/wealth";
+import { DIVISIONS, SEASON_REWARD, RANKED_PAR, RANKED_QUESTIONS, RANKED_START_RP, demoRivals, divisionFor, rankedDelta, rankedFromAttempts, season } from "@/lib/game/ranked";
 import { cn } from "@/lib/utils";
 
 interface Row { rank: number; username: string; avatar: string; rp: number; matches: number; best: number; is_me: boolean; demo?: boolean }
@@ -43,7 +44,7 @@ function useCountdown(endIso: string | undefined, offset: number) {
 }
 
 export default function RankedPage() {
-  const { attempts, attemptsLoaded, today, user, serverOffset } = useApp();
+  const { attempts, attemptsLoaded, today, user, serverOffset, economy } = useApp();
   const s = season(today);
   const me = rankedFromAttempts(attempts, s.start);
   const div = divisionFor(me.rp);
@@ -119,6 +120,7 @@ export default function RankedPage() {
                   <span className="size-3 rounded-full" style={{ background: d.color, boxShadow: `0 0 12px ${d.color}` }} />
                   <span className="font-display flex-1 text-xl tracking-wide text-white">{d.name}</span>
                   <span className="font-num text-sm text-white/55">ab {d.min || 0} RP</span>
+                  {SEASON_REWARD[DIVISIONS.indexOf(d)] > 0 && <span className="font-num ml-3 w-20 text-right text-sm font-semibold text-[var(--gold)]">+{formatCash(SEASON_REWARD[DIVISIONS.indexOf(d)])}</span>}
                 </li>
               ))}
             </ol>
@@ -135,6 +137,22 @@ export default function RankedPage() {
           </div>
         </div>
       </section>
+
+      {economy.seasons.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display mb-3 text-4xl text-white">Vergangene Saisons</h2>
+          <div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
+            {economy.seasons.slice().reverse().map((x) => (
+              <div key={x.key} className="hud w-44 shrink-0 rounded-2xl p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">{x.label}</p>
+                <p className="font-display text-3xl" style={{ color: x.division.color }}>{x.division.name}</p>
+                <p className="font-num text-xs text-white/65">{x.rp} RP · {x.matches} Matches</p>
+                <p className="font-num mt-1 text-sm font-semibold text-[var(--gold)]">{x.reward ? `+${formatCash(x.reward)}` : x.matches < 3 ? "mind. 3 Matches" : "–"}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-10">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">

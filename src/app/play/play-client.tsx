@@ -17,7 +17,9 @@ import { AnimatedNumber, RarityMeter, TierBadge, tierVar, useTierLabel } from "@
 import { RunSummary } from "@/components/run-summary";
 import { SceneOverride } from "@/components/scene";
 import { CashPop, RunCashBadge } from "@/components/wealth-hud";
-import { cashForAnswer } from "@/lib/game/economy";
+import { cashFactor, cashForAnswer } from "@/lib/game/economy";
+import { WorldMap, type LatLon } from "@/components/world-map";
+import { MapPin } from "lucide-react";
 
 interface RunMeta {
   mode: PlayMode;
@@ -30,6 +32,8 @@ interface RunMeta {
   packId: string | null;
   repeats: number;
   answered: number;
+  cap?: number | null;
+  difficulty?: string | null;
   points: number;
   practiceReason?: "already_played" | "past_date" | "training";
 }
@@ -54,6 +58,8 @@ export function PlayClient() {
   const packId = params.get("pack");
   const date = params.get("date");
   const practiceParam = params.get("practice") === "1";
+  const difficulty = params.get("diff");
+  const endless = mode === "unlimited" || mode === "training";
 
   const [phase, setPhase] = React.useState<Phase>("loading");
   const [error, setError] = React.useState<string | null>(null);
@@ -133,7 +139,9 @@ export function PlayClient() {
           }
         }
         const practice = practiceParam || !!app.hasOfficial(officialSetId);
-        const r = await api<{ token: string; meta: RunMeta }>("/api/run/start", { json: { mode, packId, date, practice } });
+        // zuletzt gespielte Fragen meiden (über alle Runden hinweg)
+        const avoid = app.attempts.slice(0, 30).flatMap((a) => a.answers.map((x) => x.questionId)).slice(0, 150);
+        const r = await api<{ token: string; meta: RunMeta }>("/api/run/start", { json: { mode, packId, date, practice, difficulty, avoid } });
         persist(r.token);
         setMeta(r.meta);
         setTotals({ total: r.meta.points, answered: r.meta.answered });
@@ -171,7 +179,7 @@ export function PlayClient() {
       persist(r.token);
       setResult(r.result);
       if (r.result.status === "accepted") {
-        const earned = cashForAnswer(r.result.tier, app.economy.level.level);
+        const earned = cashForAnswer(r.result.tier, app.economy.level.level, cashFactor({ mode: meta?.mode ?? mode, official: !!meta?.official, finishedAt: new Date().toISOString(), startedAt: "" }));
         setRunCash((c) => c + earned);
         setLastCash({ amount: earned, key: Date.now() });
       }
@@ -193,7 +201,7 @@ export function PlayClient() {
       submittingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [persist, fetchQuestion]);
+  }, [persist, fetchQuestion, meta]);
 
   const finish = async () => {
     setPhase("finishing");
@@ -243,14 +251,15 @@ export function PlayClient() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-7rem)] max-w-2xl flex-col">
+    <div className={cn("mx-auto flex min-h-[calc(100dvh-7rem)] flex-col", mode === "atlas" ? "max-w-5xl" : "max-w-2xl")}>
       <SceneOverride scene={payload?.question.packId ?? meta?.packId ?? (meta?.mode === "daily" ? "oceandrive" : meta?.mode === "ranked" ? "downtown" : "night")} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="-ml-3"><ArrowLeft />Zurück</Button>
         {meta && (
           <div className="flex min-w-0 items-center gap-2 text-sm">
             <span className="truncate text-xs font-bold uppercase tracking-[0.18em] text-white/80">{meta.title}</span>
-            {!meta.official && (meta.mode === "training" || meta.mode === "archive" || !!meta.practiceReason) && meta.mode !== "unlimited" && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
+            {!meta.official && (meta.mode === "archive" || meta.practiceReason === "already_played" || meta.practiceReason === "past_date") && <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted">Training</span>}
+            {endless && meta.cap ? <span className="font-num shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/75">{totals.answered}/{meta.cap}</span> : null}
           </div>
         )}
         <RunCashBadge cash={runCash} level={app.economy.level.level} />
@@ -283,14 +292,14 @@ export function PlayClient() {
           {phase === "intro" && meta && (
             <motion.div key="intro" initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }} className="relative isolate flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[28px] border border-white/15 shadow-[var(--shadow-lift)] sm:min-h-[500px]">
               <div className="kenburns absolute inset-0 -z-20">
-                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} variant="full" /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : meta.mode === "ranked" ? "/images/backgrounds/downtown.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
+                {meta.packId ? <PackArt packId={meta.packId} image={app.packById(meta.packId)?.coverImage} variant="full" /> : <img src={meta.mode === "unlimited" ? "/images/backgrounds/night.webp" : meta.mode === "ranked" ? "/images/backgrounds/downtown.webp" : meta.mode === "atlas" ? "/images/backgrounds/coast.webp" : "/images/dashboard/daily.webp"} alt="" className="h-full w-full object-cover" />}
               </div>
               <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(10,6,20,0.97)] from-10% via-[rgba(10,6,20,0.72)] via-55% to-[rgba(10,6,20,0.05)]" />
               <div className="px-6 pb-8 pt-24 text-center sm:px-10">
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-[var(--peach)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{meta.subtitle}</p>
                 <h1 className="font-display title-chroma mt-2 text-6xl leading-[0.9] text-white sm:text-7xl">{resumed ? "Weiter geht's" : meta.title}</h1>
                 <p className="mx-auto mt-3 max-w-md font-num text-sm uppercase tracking-[0.2em] text-white/75">
-                  {meta.total ? `${meta.total} Fragen` : "Endlos"} · {app.settings.timeLimitSeconds} Sek.
+                  {meta.total ? `${meta.total} ${meta.mode === "atlas" ? "Orte" : "Fragen"}` : meta.cap ? `${meta.cap} Fragen am Stück` : "Endlos"} · {meta.mode === "atlas" ? 30 : app.settings.timeLimitSeconds} Sek.{meta.difficulty && meta.difficulty !== "mix" ? ` · ${meta.difficulty}` : ""}
                 </p>
                 {meta.practiceReason === "already_played" && <Notice icon={Repeat2}>Heute schon gespielt – das ist eine Trainingsrunde.</Notice>}
                 <Button size="lg" variant="sand" className="mt-7 min-w-56" onClick={begin} autoFocus>
@@ -310,7 +319,10 @@ export function PlayClient() {
             </motion.div>
           )}
 
-          {(phase === "question" || phase === "submitting") && payload && (
+          {(phase === "question" || phase === "submitting") && payload && payload.question.kind === "atlas" && (
+            <AtlasQuestion key={"a" + payload.index} payload={payload} offset={offset} submitting={phase === "submitting"} onSubmit={submit} />
+          )}
+          {(phase === "question" || phase === "submitting") && payload && payload.question.kind !== "atlas" && (
             <QuestionView
               key={"q" + payload.index + payload.question.id}
               payload={payload}
@@ -326,7 +338,11 @@ export function PlayClient() {
           )}
 
           {phase === "result" && result && payload && (
-            <ResultView key={"r" + payload.index} result={result} question={payload.question} onNext={next} last={lastDone} tierLabel={tierLabel} mode={meta?.mode} onEnd={finish} />
+            result.geo ? (
+              <AtlasResult key={"ar" + payload.index} result={result} question={payload.question} onNext={next} last={lastDone} />
+            ) : (
+              <ResultView key={"r" + payload.index} result={result} question={payload.question} onNext={next} last={lastDone} tierLabel={tierLabel} mode={meta?.mode} onEnd={finish} />
+            )
           )}
 
           {phase === "finishing" && (
@@ -531,7 +547,7 @@ function ResultView({ result, question, onNext, last, tierLabel, mode, onEnd }: 
       </div>
 
       <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        {mode === "unlimited" && !last && (
+        {(mode === "unlimited" || mode === "training") && !last && (
           <Button variant="secondary" size="lg" onClick={onEnd}><LogOut />Runde beenden</Button>
         )}
         <Button size="lg" variant="sand" onClick={onNext} autoFocus>
@@ -574,5 +590,81 @@ function ReportDialog({ open, onOpenChange, questionId, answer, onDone }: { open
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function useCountdownTo(deadline: number, offset: number, onZero: () => void) {
+  const [remaining, setRemaining] = React.useState(() => Math.max(0, deadline - (Date.now() + offset)));
+  const fired = React.useRef(false);
+  const cb = React.useRef(onZero);
+  cb.current = onZero;
+  React.useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const r = Math.max(0, deadline - (Date.now() + offset));
+      setRemaining(r);
+      if (r <= 0 && !fired.current) {
+        fired.current = true;
+        cb.current();
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [deadline, offset]);
+  return { remaining, fired };
+}
+
+/** Weltkarte: Ort antippen, dann Tipp abgeben */
+function AtlasQuestion({ payload, offset, submitting, onSubmit }: { payload: QuestionPayload; offset: number; submitting: boolean; onSubmit: (v: string) => void }) {
+  const [guess, setGuess] = React.useState<LatLon | null>(null);
+  const g = React.useRef<LatLon | null>(null);
+  g.current = guess;
+  const send = () => onSubmit(g.current ? `${g.current.lat},${g.current.lon}` : "");
+  const { remaining, fired } = useCountdownTo(new Date(payload.deadline).getTime(), offset, send);
+  const secs = Math.ceil(remaining / 1000);
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--peach)]">Wo liegt …</p>
+          <h2 className="font-display truncate text-5xl leading-none text-white sm:text-7xl">{payload.question.prompt}</h2>
+          <p className="mt-1 text-sm font-semibold text-white/65">{payload.question.hint}</p>
+        </div>
+        <span className={cn("font-num grid size-16 shrink-0 place-items-center rounded-full border-2 text-2xl font-semibold", secs <= 5 ? "border-[#ff5d73] text-[#ff8a98]" : "border-white/30 text-white")} role="timer">{secs}</span>
+      </div>
+      <WorldMap guess={guess} onGuess={setGuess} disabled={submitting} className="aspect-[1000/560] w-full" />
+      <div className="flex justify-end">
+        <Button size="lg" className="h-14 rounded-2xl px-8 uppercase tracking-[0.1em]" disabled={!guess || submitting} onClick={() => { if (!fired.current) { fired.current = true; send(); } }}>
+          {submitting ? <Loader2 className="animate-spin" /> : <MapPin />}Tipp abgeben
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+function AtlasResult({ result, question, onNext, last }: { result: AnswerResult; question: PublicQuestion; onNext: () => void; last: boolean }) {
+  const geo = result.geo!;
+  const guess = geo.guessLat != null && geo.guessLon != null ? { lat: geo.guessLat, lon: geo.guessLon } : null;
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--peach)]">{question.prompt}</p>
+          <h2 className="font-display text-5xl leading-none text-white sm:text-6xl">{geo.km != null ? `${geo.km.toLocaleString("de-CH")} km` : "Kein Tipp"}</h2>
+        </div>
+        <div className="text-right">
+          <p className="font-num text-6xl font-bold" style={result.tier && result.tier !== "legendary" ? { color: tierVar(result.tier) } : undefined}>
+            <span className={result.tier === "legendary" ? "text-sunset" : undefined}>+<AnimatedNumber value={result.points} duration={0.8} /></span>
+          </p>
+          {result.tier && <TierBadge tier={result.tier} />}
+        </div>
+      </div>
+      <WorldMap guess={guess} truth={{ lat: geo.lat, lon: geo.lon }} disabled className="aspect-[1000/560] w-full" />
+      <div className="flex justify-end">
+        <Button size="lg" variant="sand" onClick={onNext} autoFocus>{last ? "Ergebnis anzeigen" : "Nächster Ort"} <ArrowRight /></Button>
+      </div>
+    </motion.div>
   );
 }

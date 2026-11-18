@@ -95,9 +95,10 @@ describe("Wirtschaft", () => {
     ]);
     expect(eco.earned).toBe(230);
     expect(eco.xp).toBe(130);
-    expect(canBuy(SHOP[0], eco, [])).toBe("Nicht genug Geld.");
-    expect(canBuy(SHOP[0], { ...eco, earned: 1000 }, [])).toBeNull();
-    expect(canBuy(SHOP[SHOP.length - 1], eco, [])).toMatch(/Level/);
+    const hut = SHOP.find((i) => i.id === "beach-hut")!;
+    expect(canBuy(hut, eco, [])).toBe("Nicht genug Geld.");
+    expect(canBuy(hut, { ...eco, earned: 1000 }, [])).toBeNull();
+    expect(canBuy(SHOP.find((i) => i.id === "island")!, eco, [])).toMatch(/Level/);
   });
   it("erzeugt schwierige Buchstaben-Varianten mit erklärten Fehlantworten", () => {
     const qs = seedContent().questions;
@@ -144,5 +145,61 @@ describe("Runde 4: spezifische Fragen, Avatare", () => {
     expect(isValidAvatar("<script>")).toBe(false);
     expect(parseAvatar("rocket.ocean")).toMatchObject({ icon: "rocket", color: "ocean" });
     expect(parseAvatar("fern").icon).toBe("leaf");
+  });
+});
+
+describe("Spielwelt: Shop, Figur, Grundstück, Weltkarte", () => {
+  it("stapelbare Deko, Premium-Sperre und Gratis-Kleidung", async () => {
+    const { canBuy, ownedCount, computeEconomy, SHOP } = await import("@/lib/game/economy");
+    const eco = { ...computeEconomy([]), earned: 100000 };
+    const palm = SHOP.find((i) => i.id === "palme")!;
+    const buys = Array.from({ length: 16 }, () => ({ itemId: "palme", price: 150, at: "" }));
+    expect(canBuy(palm, eco, buys.slice(0, 3))).toBeNull();
+    expect(canBuy(palm, eco, buys)).toMatch(/Maximal/);
+    const neon = SHOP.find((i) => i.id === "neonpalme")!;
+    expect(canBuy(neon, { ...eco, level: { ...eco.level, level: 10 } }, [])).toBe("Nur mit Premium.");
+    expect(canBuy(neon, { ...eco, level: { ...eco.level, level: 10 } }, [], true)).toBeNull();
+    expect(ownedCount([], "tee-weiss")).toBe(1);
+  });
+  it("prüft die Spielfigur gegen den Besitz", async () => {
+    const { validateCharacter, PRESETS } = await import("@/lib/game/character");
+    const base = { ...PRESETS[0] };
+    expect(typeof validateCharacter(base, () => false)).toBe("object");
+    expect(validateCharacter({ ...base, head: "krone" }, () => false)).toMatch(/besitzt/);
+    expect(typeof validateCharacter({ ...base, head: "krone" }, (id) => id === "krone")).toBe("object");
+    expect(validateCharacter({ ...base, top: "cap" }, () => true)).toMatch(/besitzt/);
+    expect(validateCharacter({ ...base, skin: "<x>" }, () => true)).toMatch(/Ungültig/);
+  });
+  it("prüft Grundstück: Besitz, Grenzen, Überlappung, Böden", async () => {
+    const { validateEstate, plotSize, findFreeSpot } = await import("@/lib/game/estate");
+    const purchases = [{ itemId: "pool", price: 4000, at: "" }, { itemId: "palme", price: 150, at: "" }, { itemId: "weg", price: 20, at: "" }];
+    expect(plotSize(purchases)).toBe(8);
+    expect(plotSize([...purchases, { itemId: "plot-12", price: 1, at: "" }])).toBe(12);
+    const ok = validateEstate({ env: "strand", items: [{ uid: "a", id: "pool", x: 0, y: 0 }, { uid: "b", id: "palme", x: 3, y: 3 }, { uid: "c", id: "weg", x: 3, y: 3 }] }, purchases);
+    expect(typeof ok).toBe("object");
+    expect(validateEstate({ env: "strand", items: [{ uid: "a", id: "pool", x: 0, y: 0 }, { uid: "b", id: "palme", x: 1, y: 1 }] }, purchases)).toMatch(/überlappen/);
+    expect(validateEstate({ env: "strand", items: [{ uid: "a", id: "pool", x: 7, y: 0 }] }, purchases)).toMatch(/Ausserhalb/);
+    expect(validateEstate({ env: "strand", items: [{ uid: "a", id: "villa", x: 0, y: 0 }] }, purchases)).toMatch(/genug/);
+    expect(validateEstate({ env: "neon", items: [] }, purchases)).toMatch(/Umgebung/);
+    expect(findFreeSpot({ env: "strand", items: [{ uid: "a", id: "pool", x: 0, y: 0 }] }, "palme", 8)).toEqual({ x: 2, y: 0 });
+  });
+  it("wertet Weltkarten-Tipps nach Entfernung", async () => {
+    const { haversineKm, geoPoints } = await import("@/lib/game/geo");
+    expect(Math.round(haversineKm(47.37, 8.54, 46.95, 7.45))).toBeGreaterThan(90);
+    expect(Math.round(haversineKm(47.37, 8.54, 46.95, 7.45))).toBeLessThan(100);
+    expect(geoPoints(10)).toBe(100);
+    expect(geoPoints(650)).toBeGreaterThan(45);
+    expect(geoPoints(20000)).toBe(0);
+  });
+  it("freie Runden zahlen einen Viertel, Saisons belohnen", async () => {
+    const { cashFactor, computeEconomy } = await import("@/lib/game/economy");
+    expect(cashFactor({ mode: "training", official: false, finishedAt: "2026-12-01T00:00:00Z", startedAt: "" })).toBe(0.25);
+    expect(cashFactor({ mode: "training", official: false, finishedAt: "2026-11-10T00:00:00Z", startedAt: "" })).toBe(1);
+    expect(cashFactor({ mode: "daily", official: true, finishedAt: "2026-12-01T00:00:00Z", startedAt: "" })).toBe(1);
+    const ranked = (day: number, total: number) => ({ id: `r${day}`, mode: "ranked" as const, official: false, setId: null, date: null, packId: null, total, maxTotal: 700, answers: [], startedAt: `2026-11-${String(day).padStart(2, "0")}T10:00:00Z`, finishedAt: `2026-11-${String(day).padStart(2, "0")}T10:05:00Z` });
+    const eco = computeEconomy([ranked(9, 700), ranked(10, 700), ranked(11, 700)], new Date("2026-11-20T00:00:00Z"));
+    expect(eco.seasons).toHaveLength(1);
+    expect(eco.seasons[0].division.id).toBe("gold");
+    expect(eco.seasonRewards).toBe(4000);
   });
 });

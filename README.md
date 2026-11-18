@@ -19,6 +19,29 @@ NNAXOS ist eine Quiz-Web-App: Du beantwortest täglich neue Wissensfragen selbst
 
 ---
 
+## Spielwelt (Runde 5)
+
+- **Spielfigur:** Beim ersten Start wählt jeder Spieler eine von acht eigenen Figuren (`/start`) und passt sie an: Haut, Frisur, Haarfarbe, Bart und Hintergrund. Kleidung und Accessoires aus dem Shop trägt die Figur (`/figur`). Alles ist als Vektorgrafik selbst gezeichnet, ohne fremde Bilder (`src/components/character.tsx`).
+- **Grundstück:** Ein isometrisches Raster, 8 × 8 Felder, erweiterbar auf 10, 12 und 14. Gekaufte Gebäude, Fahrzeuge, Outdoor-Objekte und Deko werden frei platziert. Boote liegen automatisch am Steg. Es gibt fünf Umgebungen (`/grundstueck`, `src/components/world/*`).
+- **Shop:** Über 100 Gegenstände in 9 Kategorien (`src/lib/game/catalog.ts`). Deko wie Palmen kann man mehrfach kaufen. Premium-Gegenstände sind rein kosmetisch.
+- **Geld:** Offizielle Runden, Ranked und Daily zahlen voll. Freie Endlos-Runden zahlen 25 %, die Weltkarte 50 %. Am Ende einer Ranked-Saison gibt es eine Belohnung je erreichter Liga. Voraussetzung sind mindestens 3 Matches in der Woche.
+- **Themen-Packs endlos:** Jedes Pack lässt sich endlos spielen, wahlweise leicht, normal, schwer oder gemischt. Kürzlich gespielte Fragen werden gemieden. Kostenlos sind es 10 Fragen am Stück, mit Premium bis 60.
+- **Weltkarte:** Ein GeoGuessr-ähnlicher Modus mit 5 Orten pro Runde, Punkte nach Entfernung. Die Kartendaten stammen von Natural Earth (gemeinfrei) und werden mit `npx tsx scripts/build-world-map.ts` erzeugt.
+- **Server-Prüfung:** Server und Client prüfen dieselbe Logik. Die Figur darf nur Gegenstände tragen, die der Spieler besitzt. Auf dem Grundstück wird geprüft: Besitz, Grenzen und keine Überlappungen. Bei Käufen wird der Kontostand aus den Runden nachgerechnet, und Käufe pro Konto werden nacheinander verarbeitet.
+
+### Premium und Bezahlung
+
+Premium ist bewusst **kein Pay-to-win**: Geld, XP, Ranglisten und Fragen sind für alle gleich. Premium bringt längere Endlos-Runden, exklusive kosmetische Gegenstände, zwei Umgebungen und ein Profil-Abzeichen.
+
+- **Heute:** Freischaltung über Codes (`PREMIUM_CODES`). Konten speichern `premium_until` in der Datenbank, Gäste erhalten ein vom Server signiertes Token.
+- **Echte Zahlungen:** Noch nicht aktiv, der Knopf auf `/premium` sagt das offen. Empfohlen ist Stripe Checkout. Dafür braucht es:
+  - einen Stripe-Account,
+  - die Secrets `STRIPE_SECRET_KEY` und `STRIPE_WEBHOOK_SECRET`,
+  - eine Route, die eine Checkout-Session erstellt,
+  - einen Webhook (`checkout.session.completed`, `customer.subscription.*`), der `premium_until` per Service-Role setzt.
+  
+  Zahlungen setzen ein Spielerkonto mit E-Mail voraus, ausserdem eine Datenschutzerklärung und AGB.
+
 ## Designsystem
 
 - **Schriften** (Google Fonts via `next/font`, selbst gehostet beim Build): Bebas Neue für grosse Überschriften, Manrope für Text und Quiz-Fragen, Space Grotesk für Zahlen und Punkte.
@@ -64,15 +87,18 @@ Im Demo-Modus gilt:
 ## Mit Supabase (Konten, Synchronisierung, Freunde, Ranglisten)
 
 1. Lege ein Supabase-Projekt an.
-2. Führe alle Dateien in `supabase/migrations/` der Reihe nach aus (Schema, Ranked, Shop), im SQL-Editor oder mit `supabase db push`.
+2. Führe alle Dateien in `supabase/migrations/` der Reihe nach aus (Schema, Ranked, Shop, Spielwelt), im SQL-Editor oder mit `supabase db push`.
 3. Spiele die Seed-Daten ein: `supabase/seed.sql`. Mit `supabase db reset` geschieht das automatisch. Neu erzeugen lässt sich die Datei mit `npm run db:seed-sql`.
 4. Trage die Werte in `.env.local` ein (siehe `.env.example`).
-5. **Spielerkonten ohne E-Mail:** Unter Authentication → Sign In / Providers → Email die Option **„Confirm email“ ausschalten**. Spieler registrieren sich nur mit Benutzername und Passwort (intern wird daraus eine nie zustellbare Adresse `name@spieler.nnaxos.invalid`).
+5. **Konten mit E-Mail:** Registrierung mit E-Mail, Spielername und Passwort. Bei aktivem „Confirm email“ kommt ein Bestätigungslink (Redirect-URL `https://DEINE-DOMAIN/auth/callback` unter Authentication → URL Configuration eintragen). Wer ganz ohne E-Mail spielen will, kann das Häkchen „Ohne E-Mail“ setzen; das funktioniert nur, wenn „Confirm email“ ausgeschaltet ist.
 6. Admin-Rechte für ein Konto vergeben: `update public.profiles set role = 'admin' where username = '…';`
 
 Gäste können ihre lokal gespielten Ergebnisse nach der Anmeldung ins Konto übernehmen. Übernommen werden nur Ergebnisse mit gültiger Server-Signatur, und bereits gewertete Tage werden nicht doppelt gezählt.
 
 ## Umgebungsvariablen
+
+`PREMIUM_CODES` (optional): Premium-Codes im Format `CODE:Tage`, mehrere durch Komma getrennt.
+
 
 | Variable | Pflicht | Zweck |
 |---|---|---|

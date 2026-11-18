@@ -1,4 +1,13 @@
 import { expect, test } from "@playwright/test";
+
+// Für alle Tests: Spielfigur ist bereits gewählt (sonst führt die Startseite zur Figurenwahl)
+test.beforeEach(async ({ page }, info) => {
+  if (info.title.startsWith("Erster Start")) return;
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("rarum.v1.character"))
+      localStorage.setItem("rarum.v1.character", JSON.stringify({ preset: "kai", skin: "s3", hair: "wavy", hairColor: "blond", facial: "stubble", backdrop: "ocean", top: "tank-schwarz", head: null, eyes: null, neck: null, ears: null }));
+  });
+});
 import { answerCurrent, answerKey } from "./helpers";
 
 test("Daily Challenge: spielen, werten, speichern, keine doppelte Wertung", async ({ page, request }) => {
@@ -114,12 +123,21 @@ test("Shop: Geld verdienen und etwas kaufen", async ({ page, request }) => {
   for (let i = 0; i < 5; i++) {
     await expect(page.locator("form h2")).toBeVisible({ timeout: 10_000 });
     await answerCurrent(page, key, "rare");
-    await page.getByRole("button", { name: i === 4 ? "Ergebnis anzeigen" : "Weiter" }).click();
+    if (i < 4) await page.getByRole("button", { name: "Weiter" }).click();
   }
+  // Endlos-Runde nach 5 Fragen selbst beenden
+  await page.getByRole("button", { name: "Runde beenden" }).click();
   await expect(page.getByText("Verdient", { exact: true })).toBeVisible({ timeout: 10_000 });
   await page.goto("/shop");
-  await page.getByRole("article").filter({ hasText: "Gitarrenkoffer" }).getByRole("button", { name: "Kaufen" }).click();
-  await expect(page.getByText("Gitarrenkoffer gehört jetzt dir!")).toBeVisible();
+  await page.getByRole("article").filter({ hasText: "Plastik-Flamingo" }).getByRole("button", { name: "Kaufen" }).click();
+  await expect(page.getByRole("dialog", { name: "Neu freigeschaltet" })).toBeVisible();
+  await page.getByRole("button", { name: "Platzieren" }).click();
+  await expect(page).toHaveURL(/grundstueck/);
+  // Flamingo aus dem Inventar aufs Grundstück stellen
+  await page.getByTitle("Plastik-Flamingo").click();
+  await expect(page.getByText("Gespeichert")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".estate-item")).toHaveCount(1);
 });
 
 test("Profil anpassen: Name, Symbol und Farbe (ohne Konto)", async ({ page }) => {
@@ -132,4 +150,29 @@ test("Profil anpassen: Name, Symbol und Farbe (ohne Konto)", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Inselkoenig" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Inselkoenig" })).toBeVisible();
+});
+
+test("Erster Start: Figur wählen und anpassen", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/start/);
+  await page.getByRole("button", { name: /Zara/ }).click();
+  await page.getByRole("button", { name: /Weiter/ }).click();
+  await page.getByRole("button", { name: "Afro" }).click();
+  await page.getByLabel("Spielername").fill("Inselheldin");
+  await page.getByRole("button", { name: /Los geht/ }).click();
+  await expect(page.getByRole("heading", { name: "NNAXOS" })).toBeVisible();
+  await page.goto("/figur");
+  await expect(page.getByRole("heading", { name: "Inselheldin" })).toBeVisible();
+  await expect(page.getByText("Die Architektin")).toBeVisible();
+});
+
+test("Weltkarte: Ort antippen und Punkte nach Entfernung", async ({ page }) => {
+  await page.goto("/play?mode=atlas");
+  await page.getByRole("button", { name: /Los geht's/ }).click();
+  const map = page.getByRole("application");
+  await expect(map).toBeVisible({ timeout: 10_000 });
+  await map.click({ position: { x: 300, y: 150 } });
+  await page.getByRole("button", { name: "Tipp abgeben" }).click();
+  await expect(page.getByRole("heading", { name: / km$|Kein Tipp/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Nächster Ort" })).toBeVisible();
 });

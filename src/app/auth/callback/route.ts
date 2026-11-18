@@ -10,5 +10,6 @@ export async function GET(req: Request) {
     const client = await userClient();
     await client?.auth.exchangeCodeForSession(code);
   }
-  return NextResponse.redirect(new URL(next.startsWith("/") ? next : "/", url.origin));
+  const safe = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/";
+  return NextResponse.redirect(new URL(safe, url.origin));
 }

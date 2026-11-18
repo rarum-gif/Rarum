@@ -1,5 +1,5 @@
 import type { AttemptRecord } from "@/lib/types";
-import { addDays, startOfDay, weekStart } from "@/lib/time";
+import { addDays, dateKey, startOfDay, weekStart } from "@/lib/time";
 
 /**
  * Ranked-Modus
@@ -94,3 +94,32 @@ export function demoRivals(seasonKey: string) {
   });
 }
 const AVATARS = ["fern", "mountain", "wave", "owl", "pine", "sun", "moon", "feather", "compass", "shell"];
+
+/** Belohnung am Saisonende je erreichter Liga (Bronze … Champion) */
+export const SEASON_REWARD = [0, 1500, 4000, 9000, 20000, 45000];
+
+export interface SeasonResult {
+  key: string;
+  label: string;
+  rp: number;
+  matches: number;
+  division: Division;
+  reward: number;
+}
+
+/** Abgeschlossene Saisons mit Endstand und Belohnung (deterministisch aus den Runden) */
+export function seasonHistory(attempts: AttemptRecord[], now = new Date()): SeasonResult[] {
+  const current = weekStart(dateKey(now));
+  const keys = new Set<string>();
+  for (const a of attempts) if (a.mode === "ranked") keys.add(weekStart(dateKey(new Date(a.startedAt))));
+  const out: SeasonResult[] = [];
+  for (const key of [...keys].sort()) {
+    if (key >= current) continue;
+    const s = season(key);
+    const inSeason = attempts.filter((a) => a.mode === "ranked" && a.startedAt >= s.start && a.startedAt < s.end);
+    const r = rankedFromAttempts(inSeason, s.start);
+    const d = divisionFor(r.rp);
+    out.push({ key, label: s.label, rp: r.rp, matches: r.matches, division: d.division, reward: r.matches >= 3 ? SEASON_REWARD[d.index] : 0 });
+  }
+  return out;
+}

@@ -2,9 +2,11 @@
 import * as React from "react";
 import type { AttemptRecord, GameSettings, ThemePack } from "@/lib/types";
 import { computeStats, type UserStats } from "@/lib/game/stats";
-import { canBuy, computeEconomy, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
+import { canBuy, computeEconomy, ownedCount, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
-import { loadGuestProfile, loadLocalAttempts, loadLocalPurchases, saveGuestProfile, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
+import { loadGuestProfile, loadLocal, loadLocalAttempts, loadLocalPurchases, saveGuestProfile, saveLocal, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
+import { validateCharacter, type Character } from "@/lib/game/character";
+import { EMPTY_ESTATE, plotSize, validateEstate, type Estate } from "@/lib/game/estate";
 import { DEFAULT_AVATAR, isValidAvatar } from "@/lib/avatars";
 
 export interface SetSummary {
@@ -33,6 +35,9 @@ export interface SessionInfo {
   role: "player" | "admin";
   inviteCode: string;
   email: string | null;
+  character?: unknown;
+  estate?: unknown;
+  premiumUntil?: string | null;
 }
 
 interface AppState {
@@ -62,6 +67,16 @@ interface AppState {
   /** Angezeigter Name und Avatar – vom Konto oder (Gast) von diesem Gerät */
   profile: { name: string; avatar: string; guest: boolean };
   saveProfile: (p: { name: string; avatar: string }) => Promise<string | null>;
+  /** Spielfigur (null = noch nicht gewählt) */
+  character: Character | null;
+  worldLoaded: boolean;
+  saveCharacter: (c: Character) => Promise<string | null>;
+  estate: Estate;
+  plot: number;
+  saveEstate: (e: Estate) => Promise<string | null>;
+  owns: (id: string) => number;
+  premium: { active: boolean; until: string | null };
+  redeemPremium: (code: string) => Promise<string | null>;
   hasOfficial: (setId: string | null | undefined) => AttemptRecord | undefined;
 }
 
@@ -82,7 +97,11 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   const [serverOffset, setServerOffset] = React.useState(0);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [guest, setGuest] = React.useState<{ name: string; avatar: string } | null>(null);
-  React.useEffect(() => setGuest(loadGuestProfile()), []);
+  const [localWorld, setLocalWorld] = React.useState<{ character: Character | null; estate: Estate | null; premium: { until: string; token: string } | null } | null>(null);
+  React.useEffect(() => {
+    setGuest(loadGuestProfile());
+    setLocalWorld({ character: loadLocal<Character>("character"), estate: loadLocal<Estate>("estate"), premium: loadLocal<{ until: string; token: string }>("premium") });
+  }, []);
 
   const refreshOverview = React.useCallback(async () => {
     try {
@@ -157,10 +176,12 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
     const l = economy.level;
     return { current: { level: l.level, name: l.title }, next: { level: l.level + 1, name: `Level ${l.level + 1}` }, toNext: l.toNext, progress: l.progress };
   }, [economy]);
+  const premiumUntil = user ? user.premiumUntil ?? null : localWorld?.premium?.until ?? null;
+  const premium = React.useMemo(() => ({ active: !!premiumUntil && new Date(premiumUntil).getTime() > Date.now(), until: premiumUntil }), [premiumUntil]);
   const buy = React.useCallback(async (itemId: string) => {
     const item = shopItem(itemId);
     if (!item) return "Unbekannter Artikel.";
-    const err = canBuy(item, economy, purchases);
+    const err = canBuy(item, economy, purchases, premium.active);
     if (err) return err;
     if (user) {
       try {
@@ -173,7 +194,7 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
     }
     setPurchases(saveLocalPurchase({ itemId, price: item.price, at: new Date().toISOString() }));
     return null;
-  }, [economy, purchases, user]);
+  }, [economy, purchases, user, premium.active]);
   const packById = React.useCallback((id: string | null | undefined) => packs.find((p) => p.id === id), [packs]);
   const hasOfficial = React.useCallback((setId: string | null | undefined) => (setId ? attempts.find((a) => a.official && a.setId === setId) : undefined), [attempts]);
 
@@ -199,9 +220,79 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
     return null;
   }, [user, refreshSession]);
 
+  const owns = React.useCallback((id: string) => ownedCount(purchases, id), [purchases]);
+  const worldLoaded = sessionLoaded && attemptsLoaded && localWorld !== null;
+  const character = React.useMemo<Character | null>(() => {
+    const raw = user ? user.character : localWorld?.character;
+    if (!raw) return null;
+    const v = validateCharacter(raw, (id) => ownedCount(purchases, id) > 0);
+    // Figur mit nicht (mehr) vorhandenen Gegenständen: Grundform behalten
+    if (typeof v === "string") {
+      const base = validateCharacter({ ...(raw as object), head: null, eyes: null, neck: null, ears: null, top: "tee-weiss" }, () => false);
+      return typeof base === "string" ? null : base;
+    }
+    return v;
+  }, [user, localWorld, purchases]);
+  const estate = React.useMemo<Estate>(() => {
+    const raw = user ? user.estate : localWorld?.estate;
+    if (!raw) return EMPTY_ESTATE;
+    const v = validateEstate(raw, purchases);
+    return typeof v === "string" ? EMPTY_ESTATE : v;
+  }, [user, localWorld, purchases]);
+  const plot = React.useMemo(() => plotSize(purchases), [purchases]);
+
+  const saveCharacter = React.useCallback(async (c: Character) => {
+    const v = validateCharacter(c, (id) => ownedCount(purchases, id) > 0);
+    if (typeof v === "string") return v;
+    if (user) {
+      try {
+        await api("/api/me/character", { method: "PUT", json: { character: v } });
+        await refreshSession();
+        return null;
+      } catch (e) {
+        return e instanceof Error ? e.message : "Speichern fehlgeschlagen.";
+      }
+    }
+    saveLocal("character", v);
+    setLocalWorld((w) => ({ ...(w ?? { estate: null, premium: null }), character: v }));
+    return null;
+  }, [user, purchases, refreshSession]);
+
+  const saveEstate = React.useCallback(async (e: Estate) => {
+    const v = validateEstate(e, purchases);
+    if (typeof v === "string") return v;
+    if (user) {
+      try {
+        await api("/api/me/estate", { method: "PUT", json: { estate: v } });
+        await refreshSession();
+        return null;
+      } catch (err) {
+        return err instanceof Error ? err.message : "Speichern fehlgeschlagen.";
+      }
+    }
+    saveLocal("estate", v);
+    setLocalWorld((w) => ({ ...(w ?? { character: null, premium: null }), estate: v }));
+    return null;
+  }, [user, purchases, refreshSession]);
+
+  const redeemPremium = React.useCallback(async (code: string) => {
+    try {
+      const r = await api<{ until: string; token?: string }>("/api/premium/redeem", { json: { code } });
+      if (user) await refreshSession();
+      else if (r.token) {
+        saveLocal("premium", { until: r.until, token: r.token });
+        setLocalWorld((w) => ({ ...(w ?? { character: null, estate: null }), premium: { until: r.until, token: r.token! } }));
+      }
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : "Code konnte nicht eingelöst werden.";
+    }
+  }, [user, refreshSession]);
+
   const value: AppState = {
     packs, settings, accountsEnabled, user, sessionLoaded, attempts, attemptsLoaded, storage: user ? "account" : "local",
     overview, today, serverOffset, stats, level, economy, purchases, wallet, buy, refreshOverview, refreshSession, reloadAttempts, recordAttempt, packById, hasOfficial, profile, saveProfile,
+    character, worldLoaded, saveCharacter, estate, plot, saveEstate, owns, premium, redeemPremium,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

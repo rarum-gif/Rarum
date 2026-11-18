@@ -137,3 +137,21 @@ export function saveGuestProfile(p: GuestProfile) {
     /* privater Modus – dann eben nur für diese Sitzung */
   }
 }
+
+// Spielwelt der Gäste: Figur, Grundstück, Premium-Token – nur auf diesem Gerät
+export function loadLocal<T>(key: "character" | "estate" | "premium"): T | null {
+  try {
+    const raw = localStorage.getItem(`rarum.v1.${key}`);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLocal(key: "character" | "estate" | "premium", value: unknown) {
+  try {
+    localStorage.setItem(`rarum.v1.${key}`, JSON.stringify(value));
+  } catch {
+    /* privater Modus */
+  }
+}

@@ -168,3 +168,29 @@ export function defaultLevels(): LevelDef[] {
 export function settingsMaxTotal(settings: GameSettings, count: number) {
   return Math.max(...settings.tiers.map((t) => t.points)) * count;
 }
+
+/** Erfolge aus der Spielwelt (Besitz, Grundstück, Weltkarte, Ranked-Saisons) – werden im Profil berechnet */
+export interface WorldInfo {
+  purchases: { itemId: string }[];
+  placed: number;
+  plot: number;
+  seasonsPlayed: number;
+  bestDivision: number;
+  hasCharacter: boolean;
+}
+export interface WorldAchievement extends Omit<AchievementDef, "check"> {
+  check: (w: WorldInfo, attempts: AttemptRecord[]) => boolean;
+}
+const has = (w: WorldInfo, pred: (id: string) => boolean) => w.purchases.some((p) => pred(p.itemId));
+export const WORLD_ACHIEVEMENTS: WorldAchievement[] = [
+  { id: "w_character", title: "Neu auf Naxos", description: "Eine Spielfigur gewählt", icon: "seedling", tier: "bronze", check: (w) => w.hasCharacter },
+  { id: "w_first_buy", title: "Erster Einkauf", description: "Etwas im Shop gekauft", icon: "star", tier: "bronze", check: (w) => w.purchases.length > 0 },
+  { id: "w_wheels", title: "Eigene Räder", description: "Ein Fahrzeug gekauft", icon: "compass", tier: "bronze", check: (w) => has(w, (id) => ["bmx", "scooter", "golfcart", "food-truck", "kleinwagen", "motorrad", "pickup", "cabrio", "muscle", "suv", "sportwagen", "limousine", "supersport", "neon-racer"].includes(id)) },
+  { id: "w_boat", title: "Leinen los", description: "Ein Boot gekauft", icon: "feather", tier: "silver", check: (w) => has(w, (id) => ["jetski", "segelboot", "speedboot", "yacht"].includes(id)) },
+  { id: "w_builder", title: "Bauherr", description: "20 Gegenstände auf dem Grundstück platziert", icon: "mountain", tier: "silver", check: (w) => w.placed >= 20 },
+  { id: "w_estate", title: "Grossgrundbesitz", description: "Grundstück auf 14 × 14 erweitert", icon: "crown", tier: "gold", check: (w) => w.plot >= 14 },
+  { id: "w_villa", title: "Villenbesitzer", description: "Eine Strand- oder Glasvilla gekauft", icon: "gem", tier: "gold", check: (w) => has(w, (id) => id === "villa" || id === "glasvilla") },
+  { id: "w_atlas", title: "Globetrotter", description: "Einen Ort auf der Weltkarte auf 25 km genau gefunden", icon: "target", tier: "silver", check: (_w, at) => at.some((a) => a.mode === "atlas" && a.answers.some((x) => x.tier === "legendary")) },
+  { id: "w_season", title: "Saisonprofi", description: "Eine Ranked-Saison abgeschlossen", icon: "flame", tier: "bronze", check: (w) => w.seasonsPlayed > 0 },
+  { id: "w_gold", title: "Goldliga", description: "Eine Saison mindestens in Gold beendet", icon: "crown", tier: "gold", check: (w) => w.bestDivision >= 2 },
+];

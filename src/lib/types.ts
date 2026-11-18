@@ -122,7 +122,7 @@ export interface AnswerReport {
 
 // ---------- Spielablauf ----------
 
-export type PlayMode = "daily" | "pack" | "training" | "unlimited" | "archive" | "ranked";
+export type PlayMode = "daily" | "pack" | "training" | "unlimited" | "archive" | "ranked" | "atlas";
 
 export type ResultStatus = "accepted" | "known_wrong" | "unknown" | "empty" | "timeout";
 
@@ -139,6 +139,8 @@ export interface AnswerResult {
   /** Einige andere gültige Antworten als Lernanreiz */
   examples: { text: string; tier: TierId }[];
   sources: SourceRef[];
+  /** Weltkarte: richtiger Ort, Tipp und Entfernung */
+  geo?: { lat: number; lon: number; guessLat: number | null; guessLon: number | null; km: number | null };
 }
 
 export interface PublicQuestion {
@@ -149,6 +151,9 @@ export interface PublicQuestion {
   difficulty: 1 | 2 | 3;
   timeLimitSeconds: number;
   repeat: boolean;
+  /** Weltkarten-Frage: Ort auf der Karte antippen */
+  kind?: "atlas";
+  hint?: string;
 }
 
 export interface AttemptAnswer {

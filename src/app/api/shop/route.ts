@@ -1,16 +1,12 @@
 import { fail, handle, json, readJson } from "@/lib/server/http";
 import { getSessionUser, serviceClient } from "@/lib/server/supabase";
+import { purchasesOf } from "@/lib/server/purchases";
+import { isPremium } from "@/lib/server/premium";
 import { listAttempts } from "@/lib/server/progress";
 import { getStore } from "@/lib/server/store";
-import { canBuy, computeEconomy, shopItem, type Purchase } from "@/lib/game/economy";
+import { canBuy, computeEconomy, shopItem } from "@/lib/game/economy";
 
 export const dynamic = "force-dynamic";
-
-async function purchasesOf(userId: string): Promise<Purchase[]> {
-  const { data, error } = await serviceClient().from("purchases").select("item_id, price, created_at").eq("user_id", userId).order("created_at");
-  if (error) throw error;
-  return (data ?? []).map((r) => ({ itemId: r.item_id as string, price: r.price as number, at: r.created_at as string }));
-}
 
 /** Eigene Käufe (nur mit Konto – Gäste speichern lokal). */
 export const GET = handle(async () => {
@@ -19,6 +15,16 @@ export const GET = handle(async () => {
   return json({ purchases: await purchasesOf(user.id) });
 });
 
+// Käufe pro Konto nacheinander abarbeiten (verhindert Doppelausgaben bei gleichzeitigen Klicks)
+const locks = new Map<string, Promise<unknown>>();
+function serial<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = locks.get(key) ?? Promise.resolve();
+  const next = prev.catch(() => {}).then(fn);
+  locks.set(key, next);
+  void next.finally(() => { if (locks.get(key) === next) locks.delete(key); });
+  return next;
+}
+
 /** Kauf: Der Server rechnet den Kontostand selbst aus den gespeicherten Runden nach. */
 export const POST = handle(async (req: Request) => {
   const user = await getSessionUser();
@@ -26,12 +32,14 @@ export const POST = handle(async (req: Request) => {
   const { itemId } = await readJson<{ itemId?: string }>(req);
   const item = shopItem(String(itemId ?? ""));
   if (!item) return fail("Unbekannter Artikel.");
+  return serial(user.id, async () => {
   const content = await getStore().getContent();
   const economy = computeEconomy(await listAttempts(user.id, content));
   const current = await purchasesOf(user.id);
-  const err = canBuy(item, economy, current);
+  const err = canBuy(item, economy, current, isPremium(user));
   if (err) return fail(err, 409);
   const { error } = await serviceClient().from("purchases").insert({ user_id: user.id, item_id: item.id, price: item.price });
   if (error) return fail("Kauf fehlgeschlagen.", 500);
   return json({ purchases: await purchasesOf(user.id) });
+  });
 });

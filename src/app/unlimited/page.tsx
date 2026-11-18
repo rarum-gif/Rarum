@@ -1,15 +1,15 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, Infinity as InfinityIcon, Shuffle, Timer, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
+import { EndlessLauncher } from "@/components/endless-launcher";
 import { useApp } from "@/components/providers";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader, StatTile } from "@/components/bits";
 import { PackArt } from "@/components/pack-art";
 import { fmt } from "@/lib/utils";
 
 export default function UnlimitedPage() {
-  const { stats, attempts, settings, packs } = useApp();
+  const { stats, attempts, packs } = useApp();
   const runs = attempts.filter((a) => a.mode === "unlimited");
   const answered = runs.reduce((s, a) => s + a.answers.length, 0);
   return (
@@ -20,14 +20,7 @@ export default function UnlimitedPage() {
           {packs.map((p) => <div key={p.id} className="min-w-0 flex-1 transition-[flex] duration-500 hover:flex-[3]"><PackArt packId={p.id} image={p.coverImage} /></div>)}
         </div>
         <div className="p-6 sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <ul className="space-y-2 text-sm text-fg-muted">
-              <li className="flex items-center gap-2"><Shuffle className="size-4 text-[var(--peach)]" />Immer neue Kombinationen aus allen Packs</li>
-              <li className="flex items-center gap-2"><Timer className="size-4 text-[var(--peach)]" />{settings.timeLimitSeconds} Sekunden pro Frage</li>
-              <li className="flex items-center gap-2"><InfinityIcon className="size-4 text-[var(--peach)]" />Raritäts-Punkte wie in der Daily Challenge</li>
-            </ul>
-            <Button asChild size="lg" variant="sand"><Link href="/play?mode=unlimited">Start unlimited <ArrowRight /></Link></Button>
-          </div>
+          <EndlessLauncher href="/play?mode=unlimited" />
         </div>
       </section>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">

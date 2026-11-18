@@ -43,6 +43,9 @@ export interface SessionUser {
   avatar: string;
   role: "player" | "admin";
   inviteCode: string;
+  character: unknown;
+  estate: unknown;
+  premiumUntil: string | null;
 }
 
 /** Liefert den eingeloggten Nutzer samt Profil oder null (Gast / Demo-Modus). */
@@ -53,7 +56,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const { data } = await client.auth.getUser();
   const user = data.user;
   if (!user) return null;
-  const { data: profile } = await serviceClient().from("profiles").select("username, avatar, role, invite_code").eq("id", user.id).maybeSingle();
+  const { data: profile } = await serviceClient().from("profiles").select("username, avatar, role, invite_code, character, estate, premium_until").eq("id", user.id).maybeSingle();
   return {
     id: user.id,
     email: user.email ?? null,
@@ -61,5 +64,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     avatar: profile?.avatar ?? "fern",
     role: (profile?.role as "player" | "admin") ?? "player",
     inviteCode: profile?.invite_code ?? "",
+    character: profile?.character ?? null,
+    estate: profile?.estate ?? null,
+    premiumUntil: (profile?.premium_until as string | null) ?? null,
   };
 }

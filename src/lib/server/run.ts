@@ -1,6 +1,8 @@
 import "server-only";
 import { randomInt } from "node:crypto";
-import type { AnswerResult, AttemptAnswer, AttemptRecord, ContentData, PlayMode, PublicQuestion, ResultStatus, TierId } from "@/lib/types";
+import type { AnswerResult, AttemptAnswer, AttemptRecord, ContentData, PlayMode, PublicQuestion, Question, ResultStatus, TierId } from "@/lib/types";
+import { ATLAS, ATLAS_ROUND, ATLAS_TIME, atlasPlace } from "@/content/atlas";
+import { geoPoints, haversineKm } from "@/lib/game/geo";
 import { isEligible, setId as makeSetId } from "@/lib/game/schedule";
 import { evaluateAnswer, maxPointsPerQuestion } from "@/lib/game/scoring";
 import { RANKED_QUESTIONS } from "@/lib/game/ranked";
@@ -56,6 +58,32 @@ export interface RunState {
   uid: string | null;
   aid: string | null;
   done: boolean;
+  /** Endlos-Modi: Schwierigkeit, maximale Länge, zu meidende Fragen */
+  diff?: Difficulty;
+  cap?: number;
+  av?: string[];
+}
+
+export type Difficulty = "leicht" | "normal" | "schwer" | "mix";
+/** Kostenlos: Endlos-Runden mit 10 Fragen am Stück; Premium: bis 60 */
+export const FREE_ENDLESS = 10;
+const isEndless = (m: PlayMode) => m === "unlimited" || m === "training";
+const isVariant = (q: Question) => q.id.includes("-buchstabe-");
+function diffOk(q: Question, d?: Difficulty) {
+  if (d === "leicht") return q.difficulty === 1 && !isVariant(q);
+  if (d === "normal") return q.difficulty <= 2 && !isVariant(q);
+  if (d === "schwer") return q.difficulty === 3 || isVariant(q);
+  return true;
+}
+
+/** Fragetext auch für Weltkarten-Fragen */
+export function promptOf(content: ContentData, id: string) {
+  if (id.startsWith("atlas:")) {
+    const p = atlasPlace(id.slice(6));
+    return { prompt: p ? `Wo liegt ${p.name}?` : "Weltkarte", packId: "geografie" };
+  }
+  const q = content.questions.find((x) => x.id === id);
+  return { prompt: q?.prompt ?? "", packId: q?.packId ?? "" };
 }
 
 export interface RunMeta {
@@ -71,6 +99,8 @@ export interface RunMeta {
   answered: number;
   points: number;
   practiceReason?: "already_played" | "past_date" | "training";
+  cap?: number | null;
+  difficulty?: Difficulty | null;
 }
 
 const UNLIMITED_MAX = 60;
@@ -122,6 +152,10 @@ export interface StartInput {
   date?: string | null;
   /** Gäste: Client meldet, dass die offizielle Runde lokal bereits gespielt wurde */
   practice?: boolean;
+  difficulty?: Difficulty | null;
+  /** zuletzt gesehene Fragen (Gäste) – werden nach Möglichkeit gemieden */
+  avoid?: string[];
+  premium?: boolean;
 }
 
 export async function startRun(input: StartInput, user: SessionUser | null, now = new Date()) {
@@ -164,12 +198,21 @@ export async function startRun(input: StartInput, user: SessionUser | null, now 
     if (!packId) throw new RunError("Themen-Pack fehlt.");
     const pool = content.questions.filter((q) => q.packId === packId && isEligible(q));
     if (!pool.length) throw new RunError("Dieses Pack hat noch keine geprüften Fragen.", 404);
-    qs = pickRandom(pool, content.settings.packQuestionCount).map((q) => q.id);
-    rep = qs.map(() => false);
+    qs = [];
     practiceReason = "training";
   } else if (mode === "unlimited") {
     packId = null;
     qs = [];
+  } else if (mode === "atlas") {
+    packId = null;
+    // gemischte Schwierigkeit: je Runde mindestens ein leichter und ein schwerer Ort
+    const avoid = new Set((input.avoid ?? []).filter((x) => x.startsWith("atlas:")).map((x) => x.slice(6)));
+    const fresh = ATLAS.filter((p) => !avoid.has(p.id));
+    const base = fresh.length >= ATLAS_ROUND * 2 ? fresh : ATLAS;
+    const by = (l: number) => pickRandom(base.filter((p) => p.level === l), 5);
+    const mix = [...by(1).slice(0, 2), ...by(2).slice(0, 2), ...by(3).slice(0, 1)];
+    qs = pickRandom(mix, ATLAS_ROUND).map((p) => `atlas:${p.id}`);
+    rep = qs.map(() => false);
   } else if (mode === "ranked") {
     packId = null;
     const pool = content.questions.filter((q) => isEligible(q));
@@ -188,6 +231,12 @@ export async function startRun(input: StartInput, user: SessionUser | null, now 
     v: 1, rid: newId("r_"), mode, official, setId: sid, date, packId, qs, rep, i: 0, st: null, ans: [], total: 0,
     max: per * qs.length, t0: now.getTime(), uid: user?.id ?? null, aid: null, done: false,
   };
+  if (isEndless(mode)) {
+    const d = input.difficulty;
+    state.diff = d === "leicht" || d === "normal" || d === "schwer" ? d : "mix";
+    state.cap = input.premium ? UNLIMITED_MAX : FREE_ENDLESS;
+    state.av = (input.avoid ?? []).filter((x) => typeof x === "string").slice(-120);
+  }
 
   // Eingeloggt: Datenbank ist massgeblich (eine offizielle Wertung pro Set)
   if (user) {
@@ -245,8 +294,12 @@ function buildMeta(content: ContentData, s: RunState, practiceReason?: RunMeta["
       subtitle = s.date ? formatDateDe(s.date) : "";
       break;
     case "training":
-      title = `${pack} · Training`;
-      subtitle = "Zufällige Fragen, beliebig oft spielbar";
+      title = `${pack} · Endlos`;
+      subtitle = "";
+      break;
+    case "atlas":
+      title = "Weltkarte";
+      subtitle = "";
       break;
     case "unlimited":
       title = "Unlimited";
@@ -262,7 +315,7 @@ function buildMeta(content: ContentData, s: RunState, practiceReason?: RunMeta["
       break;
   }
   return {
-    mode: s.mode, official: s.official, title, subtitle, total: s.mode === "unlimited" ? null : s.qs.length,
+    mode: s.mode, official: s.official, title, subtitle, total: isEndless(s.mode) ? null : s.qs.length, cap: s.cap ?? null, difficulty: s.diff ?? null,
     setId: s.setId, date: s.date, packId: s.packId, repeats: s.rep.filter(Boolean).length, answered: s.i, points: s.total, practiceReason,
   };
 }
@@ -292,14 +345,18 @@ export async function nextQuestion(token: unknown, user: SessionUser | null, now
     s.st = started;
   }
 
-  // Unlimited: nächste Zufallsfrage anhängen
-  if (s.mode === "unlimited" && s.i >= s.qs.length) {
-    if (s.qs.length >= UNLIMITED_MAX) {
+  // Endlos: nächste Zufallsfrage anhängen
+  if (isEndless(s.mode) && s.i >= s.qs.length) {
+    if (s.qs.length >= (s.cap ?? UNLIMITED_MAX)) {
       s.done = true;
       return { token: encode(s), done: true, meta: buildMeta(content, s) };
     }
-    const recent = new Set(s.qs.slice(-80));
-    const pool = content.questions.filter((q) => isEligible(q) && !recent.has(q.id));
+    const recent = new Set([...s.qs.slice(-80), ...(s.av ?? [])]);
+    const inScope = (q: Question) => isEligible(q) && (!s.packId || q.packId === s.packId);
+    let pool = content.questions.filter((q) => inScope(q) && diffOk(q, s.diff) && !recent.has(q.id));
+    if (!pool.length) pool = content.questions.filter((q) => inScope(q) && diffOk(q, s.diff) && !s.qs.slice(-80).includes(q.id));
+    if (!pool.length) pool = content.questions.filter((q) => inScope(q) && !s.qs.slice(-20).includes(q.id));
+    if (!pool.length) pool = content.questions.filter(inScope);
     const lastPack = s.qs.length ? content.questions.find((q) => q.id === s.qs[s.qs.length - 1])?.packId : null;
     const varied = pool.filter((q) => q.packId !== lastPack);
     const pick = pickRandom(varied.length ? varied : pool, 1)[0];
@@ -316,6 +373,17 @@ export async function nextQuestion(token: unknown, user: SessionUser | null, now
   }
 
   const qid = s.qs[s.i];
+  if (qid.startsWith("atlas:")) {
+    const place = atlasPlace(qid.slice(6));
+    if (!place) throw new RunError("Dieser Ort existiert nicht mehr.", 410);
+    if (s.aid) s.st = new Date((await progress.markStarted(s.aid, s.i, qid)).startedAt).getTime();
+    else if (s.st == null) s.st = now.getTime();
+    const pq: PublicQuestion = { id: qid, packId: "geografie", prompt: place.name, topic: "", difficulty: place.level, timeLimitSeconds: ATLAS_TIME, repeat: false, kind: "atlas", hint: place.hint };
+    return {
+      token: encode(s), done: false, meta: buildMeta(content, s),
+      payload: { index: s.i, total: s.qs.length, question: pq, startedAt: new Date(s.st).toISOString(), deadline: new Date(s.st + ATLAS_TIME * 1000).toISOString(), serverNow: now.toISOString() },
+    };
+  }
   const q = content.questions.find((x) => x.id === qid);
   if (!q) throw new RunError("Diese Frage existiert nicht mehr.", 410);
 
@@ -332,7 +400,7 @@ export async function nextQuestion(token: unknown, user: SessionUser | null, now
     meta: buildMeta(content, s),
     payload: {
       index: s.i,
-      total: s.mode === "unlimited" ? null : s.qs.length,
+      total: isEndless(s.mode) ? null : s.qs.length,
       question: pq,
       startedAt: new Date(s.st).toISOString(),
       deadline: new Date(s.st + pq.timeLimitSeconds * 1000).toISOString(),
@@ -348,8 +416,9 @@ export async function submitAnswer(token: unknown, rawInput: unknown, user: Sess
   const input = typeof rawInput === "string" ? rawInput.slice(0, 120) : "";
   const content = await getStore().getContent();
   const qid = s.qs[s.i];
-  const q = content.questions.find((x) => x.id === qid);
-  if (!q) throw new RunError("Diese Frage existiert nicht mehr.", 410);
+  const atlas = qid.startsWith("atlas:") ? atlasPlace(qid.slice(6)) : null;
+  const q = atlas ? null : content.questions.find((x) => x.id === qid);
+  if (!q && !atlas) throw new RunError("Diese Frage existiert nicht mehr.", 410);
 
   let startedAt = s.st;
   if (s.aid) {
@@ -361,32 +430,32 @@ export async function submitAnswer(token: unknown, rawInput: unknown, user: Sess
   }
 
   if (!s.aid && !markGuestAnswered(s.rid, s.i)) throw new RunError("Diese Frage wurde bereits beantwortet.", 409);
-  const result: AnswerResult = evaluateAnswer(content.settings, q, input, { elapsedMs: now.getTime() - startedAt });
+  const result: AnswerResult = atlas ? evaluateAtlas(atlas, qid, input, now.getTime() - startedAt) : evaluateAnswer(content.settings, q!, input, { elapsedMs: now.getTime() - startedAt });
   if (s.aid) {
     const ok = await progress.saveAnswer(s.aid, s.i, result);
     if (!ok) throw new RunError("Diese Frage wurde bereits beantwortet.", 409);
   }
-  s.ans.push({ q: q.id, in: result.input, s: result.status, a: result.answerText, t: result.tier, p: result.points });
-  if (s.mode === "unlimited" && s.ans.length > UNLIMITED_MAX) s.ans.shift();
+  s.ans.push({ q: qid, in: result.input, s: result.status, a: result.answerText, t: result.tier, p: result.points });
+  if (isEndless(s.mode) && s.ans.length > UNLIMITED_MAX) s.ans.shift();
   s.total += result.points;
   s.i += 1;
   s.st = null;
-  if (s.mode !== "unlimited" && s.i >= s.qs.length) s.done = true;
+  if (!isEndless(s.mode) && s.i >= s.qs.length) s.done = true;
+  if (isEndless(s.mode) && s.i >= (s.cap ?? UNLIMITED_MAX)) s.done = true;
   return { token: encode(s), result, totals: { total: s.total, max: s.max, answered: s.i, done: s.done } };
 }
 
 export async function finishRun(token: unknown, user: SessionUser | null, now = new Date()) {
   const s = decodeRun(token, user);
   const content = await getStore().getContent();
-  if (s.mode !== "unlimited" && s.i < s.qs.length) throw new RunError("Die Runde ist noch nicht abgeschlossen.", 409);
-  if (s.mode === "unlimited" && s.ans.length === 0) throw new RunError("Es wurde noch keine Frage beantwortet.", 409);
+  if (!isEndless(s.mode) && s.i < s.qs.length) throw new RunError("Die Runde ist noch nicht abgeschlossen.", 409);
+  if (isEndless(s.mode) && s.ans.length === 0) throw new RunError("Es wurde noch keine Frage beantwortet.", 409);
   s.done = true;
-  // offene, unbeantwortete Unlimited-Frage wird nicht gewertet
-  const answeredCount = s.mode === "unlimited" ? s.i : s.qs.length;
+  // offene, unbeantwortete Endlos-Frage wird nicht gewertet
+  const answeredCount = isEndless(s.mode) ? s.i : s.qs.length;
   const max = maxPointsPerQuestion(content.settings) * answeredCount;
-  const qmap = new Map(content.questions.map((q) => [q.id, q]));
   const answers: AttemptAnswer[] = s.ans.map((a) => ({
-    questionId: a.q, prompt: qmap.get(a.q)?.prompt ?? "", packId: qmap.get(a.q)?.packId ?? "", input: a.in, status: a.s, answerText: a.a, tier: a.t, points: a.p,
+    questionId: a.q, ...promptOf(content, a.q), input: a.in, status: a.s, answerText: a.a, tier: a.t, points: a.p,
   }));
   const record: AttemptRecord = {
     id: s.aid ?? s.rid,
@@ -415,4 +484,19 @@ export function verifyReceipt(record: AttemptRecord): AttemptRecord | null {
   const payload = verify<AttemptRecord>(record.receipt, "receipt");
   if (!payload || payload.id !== record.id) return null;
   return payload;
+}
+
+/** Weltkarte: Tipp "lat,lon" auswerten – Punkte nach Entfernung */
+function evaluateAtlas(place: NonNullable<ReturnType<typeof atlasPlace>>, qid: string, input: string, elapsedMs: number): AnswerResult {
+  const m = /^(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(input.trim());
+  const base = { questionId: qid, input: input.slice(0, 40), answerId: null, answerText: `${place.name}, ${place.hint}`, examples: [], sources: [] };
+  const geo = { lat: place.lat, lon: place.lon, guessLat: null as number | null, guessLon: null as number | null, km: null as number | null };
+  if (elapsedMs > ATLAS_TIME * 1000 + 2500) return { ...base, status: "timeout", tier: null, points: 0, explanation: "Die Zeit war abgelaufen.", geo };
+  if (!m) return { ...base, status: "empty", tier: null, points: 0, explanation: "Kein Tipp abgegeben.", geo };
+  const lat = Math.max(-90, Math.min(90, Number(m[1])));
+  const lon = Math.max(-180, Math.min(180, Number(m[2])));
+  const km = Math.round(haversineKm(lat, lon, place.lat, place.lon));
+  const points = geoPoints(km);
+  const tier: TierId | null = points >= 95 ? "legendary" : points >= 80 ? "very_rare" : points >= 60 ? "rare" : points >= 40 ? "unusual" : points >= 20 ? "familiar" : points >= 5 ? "known" : null;
+  return { ...base, status: tier ? "accepted" : "unknown", tier, points, explanation: `${km.toLocaleString("de-CH")} km daneben`, geo: { ...geo, guessLat: lat, guessLon: lon, km } };
 }

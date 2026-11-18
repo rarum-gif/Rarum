@@ -1,7 +1,14 @@
 import "server-only";
+import { atlasPlace } from "@/content/atlas";
+
 import type { AttemptAnswer, AttemptRecord, ContentData, PlayMode, ResultStatus, TierId } from "@/lib/types";
 import { ACHIEVEMENTS, computeStats, earnedAchievements } from "@/lib/game/stats";
 import { serviceClient } from "./supabase";
+
+function atlasPrompt(id: string) {
+  const p = id.startsWith("atlas:") ? atlasPlace(id.slice(6)) : null;
+  return { prompt: p ? `Wo liegt ${p.name}?` : "", packId: p ? "geografie" : "" };
+}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -106,8 +113,7 @@ export async function listAttempts(userId: string, content: ContentData): Promis
       .map(
         (u: any): AttemptAnswer => ({
           questionId: u.question_id,
-          prompt: qmap.get(u.question_id)?.prompt ?? "",
-          packId: qmap.get(u.question_id)?.packId ?? "",
+          ...(qmap.has(u.question_id) ? { prompt: qmap.get(u.question_id)!.prompt, packId: qmap.get(u.question_id)!.packId } : atlasPrompt(u.question_id)),
           input: u.input ?? "",
           status: u.status,
           answerText: u.answer_text,

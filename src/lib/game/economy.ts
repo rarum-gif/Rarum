@@ -1,4 +1,6 @@
 import type { AttemptRecord, TierId } from "@/lib/types";
+import { CATALOG, FREE_ITEMS, catalogItem, type CatalogItem } from "./catalog";
+import { seasonHistory, type SeasonResult } from "./ranked";
 
 /**
  * Spielwirtschaft
@@ -65,14 +67,25 @@ export function titleFor(level: number): string {
 /** XP für eine abgeschlossene Runde */
 export function xpForAttempt(a: Pick<AttemptRecord, "mode" | "official" | "answers">): number {
   const correct = a.answers.filter((x) => x.status === "accepted").length;
-  const base = a.mode === "unlimited" ? 20 : a.official || a.mode === "ranked" ? 100 : 60;
+  const base = a.mode === "unlimited" || a.mode === "training" ? 20 : a.official || a.mode === "ranked" ? 100 : a.mode === "atlas" ? 50 : 60;
   const perfect = a.answers.length >= 5 && correct === a.answers.length ? 50 : 0;
   return base + correct * 15 + perfect;
 }
 
-export function cashForAnswer(tier: TierId | null, level: number): number {
+export function cashForAnswer(tier: TierId | null, level: number, factor = 1): number {
   if (!tier) return 0;
-  return Math.round(TIER_CASH[tier] * cashMultiplier(level));
+  return Math.round(TIER_CASH[tier] * cashMultiplier(level) * factor);
+}
+
+/**
+ * Freie Runden (Endlos, Training, Archiv) zahlen einen Viertel – sonst wäre
+ * stundenlanges Endlosspielen der einzige Weg zum Reichtum. Gilt für Runden ab dem
+ * Stichtag, damit bestehende Kontostände nicht schrumpfen.
+ */
+export const PRACTICE_CASH_SINCE = "2026-11-19T00:00:00.000Z";
+export function cashFactor(a: Pick<AttemptRecord, "mode" | "official" | "finishedAt" | "startedAt">): number {
+  if (a.official || a.mode === "ranked" || a.mode === "atlas") return a.mode === "atlas" ? 0.5 : 1;
+  return (a.finishedAt || a.startedAt) >= PRACTICE_CASH_SINCE ? 0.25 : 1;
 }
 
 export interface RoundEconomy {
@@ -87,10 +100,12 @@ export interface Economy {
   xp: number;
   level: ReturnType<typeof levelForXp>;
   rounds: Record<string, RoundEconomy>;
+  seasons: SeasonResult[];
+  seasonRewards: number;
 }
 
 /** Spielt alle Runden in zeitlicher Reihenfolge nach und berechnet Geld, XP und Level. */
-export function computeEconomy(attempts: AttemptRecord[]): Economy {
+export function computeEconomy(attempts: AttemptRecord[], now = new Date()): Economy {
   const sorted = attempts.slice().sort((a, b) => (a.finishedAt || a.startedAt).localeCompare(b.finishedAt || b.startedAt));
   let xp = 0;
   let earned = 0;
@@ -98,51 +113,36 @@ export function computeEconomy(attempts: AttemptRecord[]): Economy {
   for (const a of sorted) {
     const levelBefore = levelForXp(xp).level;
     let cash = 0;
-    for (const ans of a.answers) if (ans.status === "accepted") cash += cashForAnswer(ans.tier, levelBefore);
+    const f = cashFactor(a);
+    for (const ans of a.answers) if (ans.status === "accepted") cash += cashForAnswer(ans.tier, levelBefore, f);
     const gained = xpForAttempt(a);
     earned += cash;
     xp += gained;
     rounds[a.id] = { cash, xp: gained, levelBefore, levelAfter: levelForXp(xp).level };
   }
-  return { earned, xp, level: levelForXp(xp), rounds };
+  // Saison-Belohnungen (mind. 3 Ranked-Matches in einer abgeschlossenen Woche)
+  const seasons = seasonHistory(attempts, now);
+  const seasonRewards = seasons.reduce((s, r) => s + r.reward, 0);
+  earned += seasonRewards;
+  return { earned, xp, level: levelForXp(xp), rounds, seasons, seasonRewards };
 }
 
 // ---------------------------------------------------------------------------
 // Shop
 // ---------------------------------------------------------------------------
 
-export interface ShopItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: "Start" | "Fahrzeuge" | "Immobilien" | "Luxus";
-  line: string;
-  minLevel: number;
-}
-
-export const SHOP: ShopItem[] = [
-  { id: "guitar", name: "Gitarrenkoffer", price: 300, image: "busker", category: "Start", line: "Die ersten Münzen auf der Promenade.", minLevel: 1 },
-  { id: "beach-hut", name: "Strandbude", price: 800, image: "broke", category: "Start", line: "Ein bunter Turm am South Beach.", minLevel: 1 },
-  { id: "food-truck", name: "Food Truck", price: 1500, image: "truck", category: "Fahrzeuge", line: "Tacos, Neonlicht und eine Schlange vor dem Fenster.", minLevel: 2 },
-  { id: "motel", name: "Motel am Highway", price: 4000, image: "motel", category: "Immobilien", line: "Leuchtschrift: No Vacancy.", minLevel: 3 },
-  { id: "cabrio", name: "Cabrio", price: 9000, image: "cabrio", category: "Fahrzeuge", line: "Verdeck runter, Küstenstrasse rauf.", minLevel: 4 },
-  { id: "nightclub", name: "Nachtclub", price: 20000, image: "club", category: "Immobilien", line: "Dein Name leuchtet über dem Eingang.", minLevel: 6 },
-  { id: "villa", name: "Strandvilla", price: 45000, image: "villa", category: "Immobilien", line: "Palmen, Pool und Meerblick.", minLevel: 8 },
-  { id: "penthouse", name: "Penthouse", price: 90000, image: "penthouse", category: "Luxus", line: "Die ganze Skyline unter dir.", minLevel: 11 },
-  { id: "yacht", name: "Superyacht", price: 180000, image: "yacht", category: "Luxus", line: "Anker werfen, wo es dir gefällt.", minLevel: 15 },
-  { id: "jet", name: "Privatjet", price: 350000, image: "jet", category: "Luxus", line: "Wochenende? Irgendwo anders.", minLevel: 20 },
-  { id: "island", name: "Privatinsel", price: 750000, image: "island", category: "Luxus", line: "Die Insel gehört dir.", minLevel: 26 },
-];
-
-export function shopItem(id: string) {
-  return SHOP.find((i) => i.id === id);
-}
+export type ShopItem = CatalogItem;
+export const SHOP = CATALOG;
+export const shopItem = catalogItem;
 
 export interface Purchase {
   itemId: string;
   price: number;
   at: string;
+}
+
+export function ownedCount(purchases: Purchase[], id: string) {
+  return (FREE_ITEMS.has(id) ? 1 : 0) + purchases.filter((p) => p.itemId === id).length;
 }
 
 export function walletOf(economy: Economy, purchases: Purchase[]) {
@@ -152,8 +152,10 @@ export function walletOf(economy: Economy, purchases: Purchase[]) {
 }
 
 /** Prüft einen Kauf – identisch auf Client und Server. */
-export function canBuy(item: ShopItem, economy: Economy, purchases: Purchase[]): string | null {
-  if (purchases.some((p) => p.itemId === item.id)) return "Gehört dir schon.";
+export function canBuy(item: ShopItem, economy: Economy, purchases: Purchase[], premium = false): string | null {
+  const max = item.stack ?? 1;
+  if (ownedCount(purchases, item.id) >= max) return max > 1 ? `Maximal ${max} Stück.` : "Gehört dir schon.";
+  if (item.premium && !premium) return "Nur mit Premium.";
   if (economy.level.level < item.minLevel) return `Ab Level ${item.minLevel}.`;
   if (walletOf(economy, purchases).balance < item.price) return "Nicht genug Geld.";
   return null;
