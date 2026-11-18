@@ -4,7 +4,8 @@ import type { AttemptRecord, GameSettings, ThemePack } from "@/lib/types";
 import { computeStats, type UserStats } from "@/lib/game/stats";
 import { canBuy, computeEconomy, ownedCount, shopItem, walletOf, type Economy, type Purchase } from "@/lib/game/economy";
 import { api } from "@/lib/client/api";
-import { loadGuestProfile, loadLocal, loadLocalAttempts, loadLocalPurchases, saveGuestProfile, saveLocal, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
+import { browserSupabase } from "@/lib/client/supabase";
+import { clearLocalPurchases, loadGuestProfile, loadLocal, loadLocalAttempts, loadLocalPurchases, replaceLocalAttempts, saveGuestProfile, saveLocal, saveLocalAttempt, saveLocalPurchase } from "@/lib/client/local";
 import { presetOf, validateCharacter, type Character } from "@/lib/game/character";
 import { EMPTY_ESTATE, plotSize, validateEstate, type Estate } from "@/lib/game/estate";
 import { DEFAULT_AVATAR, isValidAvatar } from "@/lib/avatars";
@@ -118,10 +119,22 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
     }
   }, []);
 
+  const anonTried = React.useRef(false);
   const refreshSession = React.useCallback(async () => {
     if (!accountsEnabled) return;
     try {
-      const me = await api<{ user: SessionInfo | null; paymentsEnabled?: boolean }>("/api/me");
+      let me = await api<{ user: SessionInfo | null; paymentsEnabled?: boolean }>("/api/me");
+      // Ohne Anmeldung: automatisch ein unsichtbares Spielerkonto anlegen (keine E-Mail,
+      // kein Passwort). Alles wird online gespeichert und ist an diesen Browser gebunden.
+      if (!me.user && !anonTried.current) {
+        anonTried.current = true;
+        const sb = browserSupabase();
+        const g = loadGuestProfile();
+        const username = g?.name && /^[A-Za-z0-9_.-]{3,24}$/.test(g.name) ? g.name : undefined;
+        const { error } = (await sb?.auth.signInAnonymously({ options: { data: username ? { username, avatar: g?.avatar } : {} } })) ?? { error: null };
+        if (error) console.warn("[nnaxos] Automatisches Spielerkonto nicht möglich:", error.message);
+        else me = await api<{ user: SessionInfo | null; paymentsEnabled?: boolean }>("/api/me");
+      }
       setUser(me.user);
       setPaymentsEnabled(!!me.paymentsEnabled);
     } finally {
@@ -158,6 +171,34 @@ export function AppProvider({ children, packs, settings, accountsEnabled, initia
   React.useEffect(() => {
     if (sessionLoaded) void reloadAttempts();
   }, [sessionLoaded, reloadAttempts]);
+
+  // Bisher nur auf dem Gerät gespeicherte Daten einmalig ins Spielerkonto übernehmen
+  const migrating = React.useRef(false);
+  React.useEffect(() => {
+    if (!user || migrating.current) return;
+    const local = loadLocalAttempts().filter((a) => a.receipt);
+    const localBuys = loadLocalPurchases();
+    const localChar = loadLocal<Character>("character");
+    const localEstate = loadLocal<Estate>("estate");
+    if (!local.length && !localBuys.length && !(localChar && !user.character) && !(localEstate && !user.estate)) return;
+    migrating.current = true;
+    void (async () => {
+      try {
+        if (local.length) {
+          await api("/api/me/import", { json: { attempts: local } });
+          replaceLocalAttempts(loadLocalAttempts().filter((a) => !a.receipt));
+        }
+        // Käufe: der Server prüft jeden einzeln gegen den nachgerechneten Kontostand
+        for (const p of localBuys) await api("/api/shop", { json: { itemId: p.itemId } }).catch(() => null);
+        clearLocalPurchases();
+        if (localChar && !user.character) await api("/api/me/character", { method: "PUT", json: { character: localChar } }).catch(() => null);
+        if (localEstate && !user.estate) await api("/api/me/estate", { method: "PUT", json: { estate: localEstate } }).catch(() => null);
+      } finally {
+        await refreshSession();
+        await reloadAttempts();
+      }
+    })();
+  }, [user, refreshSession, reloadAttempts]);
 
   // Tageswechsel: Übersicht neu laden, sobald Mitternacht erreicht ist
   React.useEffect(() => {

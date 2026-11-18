@@ -168,7 +168,7 @@ export default function RankedPage() {
         </div>
         {demo && (
           <p className="mb-4 rounded-2xl border border-dashed border-white/20 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
-            {data?.available ? "Melde dich an, um gegen echte Spieler anzutreten." : "Demo-Liga mit Beispiel-Rivalen."}
+            {data?.available ? "Dein Spielerprofil wird eingerichtet …" : "Demo-Liga mit Beispiel-Rivalen."}
           </p>
         )}
         <ol className="space-y-2">

@@ -137,14 +137,10 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
               ))}
             </nav>
             <div className="border-t border-white/10 p-5">
-              {user || !accountsEnabled ? (
-                <Link href="/profil" onClick={onClose} className="flex items-center gap-3">
-                  <PlayerAvatar size={40} />
-                  <span className="block min-w-0 truncate font-semibold">{profile.name}</span>
-                </Link>
-              ) : accountsEnabled ? (
-                <Link href="/login" onClick={onClose} className="btn-sunset block rounded-xl px-4 py-3 text-center text-sm font-bold uppercase tracking-[0.18em]">Spielerkonto erstellen</Link>
-              ) : null}
+              <Link href="/profil" onClick={onClose} className="flex items-center gap-3">
+                <PlayerAvatar size={40} />
+                <span className="block min-w-0 truncate font-semibold">{profile.name}</span>
+              </Link>
             </div>
           </motion.aside>
         </>
@@ -191,9 +187,6 @@ function Sidebar() {
             <span className="font-num block text-xs text-white/55">Lvl {economy.level.level} · {attemptsLoaded ? formatCash(wallet.balance) : "–"}</span>
           </span>
         </Link>
-        {!user && accountsEnabled && (
-          <Link href="/login" className="btn-sunset mt-2 block rounded-xl px-3 py-2.5 text-center text-xs font-bold uppercase tracking-[0.16em]">Spielerkonto erstellen</Link>
-        )}
       </div>
     </aside>
   );

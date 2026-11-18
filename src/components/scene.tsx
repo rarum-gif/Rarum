@@ -20,7 +20,6 @@ const ROUTE_SCENES: [RegExp, string][] = [
   [/^\/rangliste/, "downtown"],
   [/^\/profil/, "marina"],
   [/^\/admin/, "night"],
-  [/^\/login/, "sunset"],
   [/^\/ergebnis/, "dusk"],
   [/^\/info/, "coast"],
   [/^\/play/, "night"],

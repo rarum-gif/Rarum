@@ -91,7 +91,7 @@ Im Demo-Modus gilt:
 2. Führe alle Dateien in `supabase/migrations/` der Reihe nach aus (Schema, Ranked, Shop, Spielwelt), im SQL-Editor oder mit `supabase db push`.
 3. Spiele die Seed-Daten ein: `supabase/seed.sql`. Mit `supabase db reset` geschieht das automatisch. Neu erzeugen lässt sich die Datei mit `npm run db:seed-sql`.
 4. Trage die Werte in `.env.local` ein (siehe `.env.example`).
-5. **Konten mit E-Mail:** Registrierung mit E-Mail, Spielername und Passwort. Bei aktivem „Confirm email“ kommt ein Bestätigungslink (Redirect-URL `https://DEINE-DOMAIN/auth/callback` unter Authentication → URL Configuration eintragen). Wer ganz ohne E-Mail spielen will, kann das Häkchen „Ohne E-Mail“ setzen; das funktioniert nur, wenn „Confirm email“ ausgeschaltet ist.
+5. **Spielerkonten ohne Anmeldung:** Unter Authentication → Sign In / Providers die Option **„Allow anonymous sign-ins“ einschalten**. Beim ersten Besuch legt das Spiel automatisch ein unsichtbares Konto an (keine E-Mail, kein Passwort); Fortschritt, Käufe, Figur und Grundstück werden online gespeichert und sind an diesen Browser gebunden. Wer die Browserdaten löscht, beginnt neu. Empfehlung gegen Missbrauch: unter Authentication → Attack Protection ein CAPTCHA bzw. Rate-Limits aktivieren.
 6. Admin-Rechte für ein Konto vergeben: `update public.profiles set role = 'admin' where username = '…';`
 
 Gäste können ihre lokal gespielten Ergebnisse nach der Anmeldung ins Konto übernehmen. Übernommen werden nur Ergebnisse mit gültiger Server-Signatur, und bereits gewertete Tage werden nicht doppelt gezählt.

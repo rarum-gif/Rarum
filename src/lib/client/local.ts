@@ -155,3 +155,11 @@ export function saveLocal(key: "character" | "estate" | "premium", value: unknow
     /* privater Modus */
   }
 }
+
+export function clearLocalPurchases() {
+  try {
+    localStorage.removeItem(PURCHASES);
+  } catch {
+    /* privater Modus */
+  }
+}

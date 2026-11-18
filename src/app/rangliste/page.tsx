@@ -222,9 +222,8 @@ export default function LeaderboardPage() {
       ) : !sessionLoaded ? (
         <div className="skeleton h-64 rounded-3xl" />
       ) : !user ? (
-        <EmptyState icon={Users} title="Melde dich an, um mitzuspielen">
-          Mit einem kostenlosen Konto erscheinst du in den Ranglisten und kannst Freunde hinzufügen.
-          <div className="mt-4"><Button asChild><Link href="/login">Kostenloses Konto</Link></Button></div>
+        <EmptyState icon={Users} title="Spielstand wird geladen">
+          Einen Moment – dein Spielerprofil wird eingerichtet.
         </EmptyState>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">

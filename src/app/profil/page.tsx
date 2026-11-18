@@ -1,8 +1,7 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { CalendarCheck2, CloudUpload, Download, Flame, Gem, LayoutGrid, Loader2, LogOut, Mountain, Pencil, Sigma, Sparkles, Trash2, Trophy } from "lucide-react";
+import { CalendarCheck2, Download, Flame, Gem, LayoutGrid, Loader2, Mountain, Pencil, Sigma, Sparkles, Trash2, Trophy } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +12,7 @@ import { AvatarBubble, AvatarIcon, StatTile, TierBadge } from "@/components/bits
 import { AchievementMedal } from "@/components/achievement-medal";
 import { ACHIEVEMENTS, WORLD_ACHIEVEMENTS, earnedAchievements } from "@/lib/game/stats";
 import { AVATAR_COLORS, AVATAR_ICONS, avatarId, parseAvatar } from "@/lib/avatars";
-import { api, ApiError } from "@/lib/client/api";
-import { clearLocalAttempts, loadLocal, loadLocalAttempts, loadLocalPurchases, replaceLocalAttempts } from "@/lib/client/local";
-import { browserSupabase } from "@/lib/client/supabase";
+import { clearLocalAttempts, loadLocalAttempts } from "@/lib/client/local";
 import { formatDateDe } from "@/lib/time";
 import { formatCash } from "@/lib/game/wealth";
 import { CATALOG } from "@/lib/game/catalog";
@@ -24,61 +21,6 @@ import { CharacterArt } from "@/components/character";
 import { ItemArt } from "@/components/world/item-art";
 import { Crown } from "lucide-react";
 import { cn, fmt } from "@/lib/utils";
-
-function SyncCard() {
-  const { user, reloadAttempts } = useApp();
-  const params = useSearchParams();
-  const [local, setLocal] = React.useState(0);
-  const [state, setState] = React.useState<"idle" | "busy" | "done">("idle");
-  const [msg, setMsg] = React.useState("");
-  React.useEffect(() => setLocal(loadLocalAttempts().filter((a) => a.receipt).length), []);
-  const sync = React.useCallback(async () => {
-    setState("busy");
-    try {
-      const list = loadLocalAttempts().filter((a) => a.receipt);
-      const r = await api<{ imported: number; skipped: number; rejected: number }>("/api/me/import", { json: { attempts: list } });
-      replaceLocalAttempts(loadLocalAttempts().filter((a) => !a.receipt));
-      // Gast-Käufe übernehmen – der Server prüft jeden einzeln gegen den Kontostand
-      let bought = 0;
-      for (const p of loadLocalPurchases()) {
-        try {
-          await api("/api/shop", { json: { itemId: p.itemId } });
-          bought++;
-        } catch {
-          /* nicht mehr leistbar oder schon vorhanden */
-        }
-      }
-      if (bought) await reloadAttempts();
-      const estate = loadLocal<unknown>("estate");
-      if (estate) await api("/api/me/estate", { method: "PUT", json: { estate } }).catch(() => null);
-      setLocal(0);
-      setMsg(`${r.imported} Ergebnisse übernommen${r.skipped ? `, ${r.skipped} übersprungen (bereits gewertet)` : ""}.`);
-      setState("done");
-      await reloadAttempts();
-    } catch (e) {
-      setMsg(e instanceof ApiError ? e.message : "Übernahme fehlgeschlagen.");
-      setState("idle");
-    }
-  }, [reloadAttempts]);
-  React.useEffect(() => {
-    if (user && local > 0 && params.get("sync") === "1" && state === "idle") void sync();
-  }, [user, local, params, state, sync]);
-  if (!user || (local === 0 && state !== "done")) return null;
-  return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <CloudUpload className="mt-0.5 size-5 text-[var(--peach)]" />
-          <div>
-            <p className="font-medium">{state === "done" ? "Synchronisiert" : `${local} lokale Ergebnisse gefunden`}</p>
-            <p className="text-sm text-fg-muted">{msg || "Übernimm deine bisherigen Gast-Ergebnisse in dein Konto. Bereits gewertete Tage werden nicht doppelt gezählt."}</p>
-          </div>
-        </div>
-        {state !== "done" && <Button onClick={sync} disabled={state === "busy"}>{state === "busy" && <Loader2 className="animate-spin" />}Ins Konto übernehmen</Button>}
-      </CardContent>
-    </Card>
-  );
-}
 
 function EditProfile({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { profile, saveProfile } = useApp();
@@ -196,12 +138,7 @@ function ProfileInner() {
     { label: "Legendäre Antworten", value: String(stats.legendaryAnswers) },
     { label: "Seltene Antworten (ab „Selten“)", value: String(stats.rareAnswers) },
   ];
-  const signOut = async () => {
-    await api("/api/auth/signout", { json: {} });
-    await browserSupabase()?.auth.signOut();
-    await refreshSession();
-    location.href = "/";
-  };
+
   const exportLocal = () => {
     const blob = new Blob([JSON.stringify(loadLocalAttempts(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -242,16 +179,10 @@ function ProfileInner() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={() => setEdit(true)}><Pencil />Profil anpassen</Button>
-          {user ? (
-            <Button variant="ghost" size="sm" onClick={signOut}><LogOut />Abmelden</Button>
-          ) : accountsEnabled ? (
-            <Button asChild size="sm"><Link href="/login">Spielerkonto erstellen</Link></Button>
-          ) : null}
         </div>
         </div>
       </section>
 
-      <SyncCard />
 
       <Possessions />
 

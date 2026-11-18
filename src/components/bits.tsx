@@ -141,7 +141,7 @@ export function LocalDataNotice({ className }: { className?: string }) {
       <HardDrive className="mt-0.5 size-4 shrink-0" />
       <p>
         <span className="font-medium text-fg">Lokale Daten:</span> Deine Ergebnisse werden nur in diesem Browser gespeichert.{" "}
-        {accountsEnabled ? "Mit einem kostenlosen Konto kannst du sie auf allen Geräten synchronisieren." : "Konten und globale Ranglisten werden aktiv, sobald Supabase konfiguriert ist."}
+        {accountsEnabled ? "" : "Globale Ranglisten werden aktiv, sobald die Online-Speicherung eingerichtet ist."}
       </p>
     </div>
   );

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const POST = handle(async (req: Request) => {
   if (!paymentsEnabled()) return fail("Zahlungen sind noch nicht aktiviert.", 503);
   const user = await getSessionUser();
-  if (!user) return fail("Bitte melde dich zuerst an – Premium wird an dein Spielerkonto gebunden.", 401);
+  if (!user) return fail("Dein Spielstand ist noch nicht online gespeichert. Bitte lade die Seite neu.", 401);
   if (user.premiumUntil && new Date(user.premiumUntil).getFullYear() >= 2099) return fail("Du hast Premium schon für immer.", 409);
   const origin = new URL(req.url).origin;
   const email = user.email && !user.email.endsWith(".invalid") ? user.email : null;

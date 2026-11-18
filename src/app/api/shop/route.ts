@@ -28,7 +28,7 @@ function serial<T>(key: string, fn: () => Promise<T>): Promise<T> {
 /** Kauf: Der Server rechnet den Kontostand selbst aus den gespeicherten Runden nach. */
 export const POST = handle(async (req: Request) => {
   const user = await getSessionUser();
-  if (!user) return fail("Bitte zuerst ein Spielerkonto erstellen.", 401);
+  if (!user) return fail("Dein Spielstand ist noch nicht online gespeichert. Bitte lade die Seite neu.", 401);
   const { itemId } = await readJson<{ itemId?: string }>(req);
   const item = shopItem(String(itemId ?? ""));
   if (!item) return fail("Unbekannter Artikel.");

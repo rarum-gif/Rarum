@@ -115,7 +115,7 @@ function PremiumInner() {
                 ) : !paymentsEnabled ? (
                   <button disabled className="w-full cursor-not-allowed rounded-xl border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white/55">Bezahlung folgt</button>
                 ) : !user ? (
-                  <Link href="/login" className="block w-full rounded-xl border border-white/20 px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.16em] text-white hover:bg-white/10">{accountsEnabled ? "Erst anmelden" : "Konten nicht aktiv"}</Link>
+                  <button disabled className="w-full cursor-not-allowed rounded-xl border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white/55">{accountsEnabled ? "Spielstand lädt …" : "Speicherung nicht aktiv"}</button>
                 ) : (
                   <button onClick={buyNow} disabled={payState === "busy" || payState === "checking"} className="btn-sunset flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-[0.16em]">
                     {payState === "busy" ? <Loader2 className="size-4 animate-spin" /> : <Crown className="size-4" />}Für 1 CHF freischalten
