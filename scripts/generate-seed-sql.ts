@@ -24,6 +24,27 @@ export function seedSql(): string {
 
 if (process.argv[1]?.endsWith("generate-seed-sql.ts")) {
   const file = path.join(process.cwd(), "supabase", "seed.sql");
-  fs.writeFileSync(file, seedSql());
+  const sql = seedSql();
+  fs.writeFileSync(file, sql);
   console.log("geschrieben:", file);
+  // Zusätzlich in Teile unter ~700 KB aufteilen – passend für den Supabase-SQL-Editor
+  const dir = path.join(process.cwd(), "supabase", "seed-teile");
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  const lines = sql.split("\n").filter((l) => l && l !== "begin;" && l !== "commit;" && !l.startsWith("--"));
+  const parts: string[][] = [[]];
+  let size = 0;
+  for (const l of lines) {
+    if (size + l.length > 700_000 && parts[parts.length - 1].length) {
+      parts.push([]);
+      size = 0;
+    }
+    parts[parts.length - 1].push(l);
+    size += l.length;
+  }
+  parts.forEach((p, i) => {
+    const name = `teil-${String(i + 1).padStart(2, "0")}-von-${String(parts.length).padStart(2, "0")}.sql`;
+    fs.writeFileSync(path.join(dir, name), `-- NNAXOS Startdaten, ${name}\nbegin;\n${p.join("\n")}\ncommit;\n`);
+  });
+  console.log(`aufgeteilt in ${parts.length} Teile:`, dir);
 }
